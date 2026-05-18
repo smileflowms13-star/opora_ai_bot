@@ -1,4 +1,4 @@
-import logging
+﻿import logging
 
 from aiogram import Router
 from aiogram.enums import ChatAction
@@ -10,8 +10,9 @@ from safety import is_high_risk
 from texts import CRISIS_TEXT
 
 
-router = Router()
 logger = logging.getLogger(__name__)
+
+router = Router()
 
 
 MAX_USER_TEXT_LENGTH = 3000
@@ -70,7 +71,8 @@ async def fallback_message(message: Message):
             "Попробуй открыть меню командой /menu или выбрать действие кнопками."
         )
         return
-        # Слишком длинные сообщения не сохраняем и не отправляем в AI.
+
+    # Слишком длинные сообщения не сохраняем и не отправляем в AI.
     if len(user_text) > MAX_USER_TEXT_LENGTH:
         await message.answer(TOO_LONG_MESSAGE_TEXT)
         return
@@ -108,8 +110,10 @@ async def fallback_message(message: Message):
             raise RuntimeError("AI returned empty answer")
 
     except Exception:
-        logger.exception("AI reply generation failed for telegram_id=%s", telegram_id)
-
+        logger.exception(
+            "AI request failed for telegram_id=%s",
+            message.from_user.id if message.from_user else None,
+        )
         await message.answer(AI_TEMPORARY_ERROR_TEXT)
         return
 

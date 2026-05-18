@@ -1,9 +1,11 @@
 import asyncio
 import logging
 
+from logger_config import setup_logging
 from middlewares import ConsentMiddleware
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
+logger = logging.getLogger(__name__)
 
 from config import BOT_TOKEN
 from database import init_db
@@ -44,4 +46,6 @@ async def main():
 
 
 if __name__ == "__main__":
+    setup_logging()
+    logger.info("Starting Opora AI bot")
     asyncio.run(main())

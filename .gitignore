@@ -14,3 +14,5 @@ data/*.db-shm
 *_old.py
 
 .vscode/
+logs/
+*.log
