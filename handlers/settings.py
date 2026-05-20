@@ -32,6 +32,15 @@ from texts import (
 router = Router()
 
 
+
+@router.message(Command("menu"))
+async def show_main_menu_command(message: Message):
+    await message.answer(
+        "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435, \u0441 \u0447\u0435\u0433\u043e \u043d\u0430\u0447\u043d\u0451\u043c:",
+        reply_markup=main_menu,
+    )
+
+
 @router.message(Command("settings"))
 @router.message(F.text == SETTINGS_BUTTON)
 async def show_settings(message: Message):
