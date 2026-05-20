@@ -1,26 +1,26 @@
-import asyncio
+﻿import asyncio
 import logging
 
-from logger_config import setup_logging
-from middlewares import ConsentMiddleware
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
-logger = logging.getLogger(__name__)
 
 from config import BOT_TOKEN
 from database import init_db
+from handlers import diary, fallback, info, map, sections, settings, sos, start, trigger
+from logger_config import setup_logging
+from middlewares import ConsentMiddleware
 
-from handlers import start, sos, diary, trigger, map, settings, sections, info, fallback
 
-
-logging.basicConfig(level=logging.INFO)
+logger = logging.getLogger(__name__)
 
 
 async def main():
-    print("Опора AI запускается...")
-
+    logger.info("Initializing database")
     init_db()
-    print("База данных готова.")
+    logger.info("Database is ready")
+
+    if not BOT_TOKEN:
+        raise RuntimeError("BOT_TOKEN is not configured")
 
     bot = Bot(token=BOT_TOKEN)
 
@@ -39,13 +39,29 @@ async def main():
     # fallback всегда последним
     dp.include_router(fallback.router)
 
-    print("Бот запущен. Открой Telegram и напиши /start")
+    logger.info("Routers registered")
+    logger.info("Deleting webhook and dropping pending updates")
 
     await bot.delete_webhook(drop_pending_updates=True)
-    await dp.start_polling(bot)
+
+    logger.info("Bot polling started. Open Telegram and send /start")
+
+    try:
+        await dp.start_polling(bot)
+    finally:
+        logger.info("Bot polling stopped")
 
 
 if __name__ == "__main__":
     setup_logging()
     logger.info("Starting Opora AI bot")
-    asyncio.run(main())
+
+    try:
+        asyncio.run(main())
+    except KeyboardInterrupt:
+        logger.info("Opora AI bot stopped by user")
+    except Exception:
+        logger.exception("Opora AI bot stopped because of unexpected error")
+        raise
+    else:
+        logger.info("Opora AI bot stopped")
