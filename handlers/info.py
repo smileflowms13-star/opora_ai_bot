@@ -2,17 +2,11 @@ from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.types import Message
 
-from texts import HELP_TEXT, PRIVACY_TEXT, RULES_TEXT
+from texts import HELP_TEXT, RULES_TEXT
 from database import delete_user_data, get_user_message_count
 
 
 router = Router()
-
-
-@router.message(Command("privacy"))
-@router.message(F.text == "🔐 Конфиденциальность")
-async def privacy_command(message: Message):
-    await message.answer(PRIVACY_TEXT)
 
 
 @router.message(Command("help"))
