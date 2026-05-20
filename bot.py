@@ -15,12 +15,12 @@ logger = logging.getLogger(__name__)
 
 
 async def main():
+    if not BOT_TOKEN:
+        raise RuntimeError("BOT_TOKEN is not configured")
+
     logger.info("Initializing database")
     init_db()
     logger.info("Database is ready")
-
-    if not BOT_TOKEN:
-        raise RuntimeError("BOT_TOKEN is not configured")
 
     bot = Bot(token=BOT_TOKEN)
 
@@ -36,7 +36,7 @@ async def main():
     dp.include_router(sections.router)
     dp.include_router(info.router)
 
-    # fallback всегда последним
+    # Fallback router must be registered last.
     dp.include_router(fallback.router)
 
     logger.info("Routers registered")
