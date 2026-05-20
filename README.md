@@ -92,3 +92,5 @@ python bot.py
 
 Проект опубликован на GitHub.
 Тестовое изменение для Git.
+
+Git test line 123.
