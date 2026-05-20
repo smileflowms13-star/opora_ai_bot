@@ -3,7 +3,7 @@ from aiogram.filters import Command
 from aiogram.types import Message
 
 from texts import HELP_TEXT, RULES_TEXT
-from database import delete_user_data, get_user_message_count
+from database import get_user_message_count
 
 
 router = Router()
@@ -17,25 +17,6 @@ async def help_command(message: Message):
 @router.message(F.text == "📄 Правила и безопасность")
 async def rules_button(message: Message):
     await message.answer(RULES_TEXT)
-
-
-@router.message(Command("delete_my_data"))
-@router.message(F.text == "🗑 Удалить мои данные")
-async def delete_data_command(message: Message):
-    if not message.from_user:
-        await message.answer("Не смог определить пользователя.")
-        return
-
-    delete_user_data(message.from_user.id)
-
-    await message.answer(
-        "Готово. Я удалил твои данные из базы:\n\n"
-        "— профиль пользователя;\n"
-        "— историю сообщений;\n"
-        "— дневниковые записи;\n"
-        "— разборы триггеров.\n\n"
-        "Если захочешь начать заново, нажми /start."
-    )
 
 
 @router.message(F.text == "🔔 Напоминания")

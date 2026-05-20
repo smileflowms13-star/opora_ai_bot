@@ -68,6 +68,7 @@ async def show_privacy(message: Message):
     )
 
 
+@router.message(Command("delete_my_data"))
 @router.message(F.text == SETTINGS_DELETE_DATA_BUTTON)
 async def ask_delete_data(message: Message):
     await message.answer(
