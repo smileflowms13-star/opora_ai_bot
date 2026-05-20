@@ -2,7 +2,7 @@ from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.types import Message
 
-from texts import HELP_TEXT, RULES_TEXT
+from texts import HELP_TEXT
 from database import get_user_message_count
 
 
@@ -12,11 +12,6 @@ router = Router()
 @router.message(Command("help"))
 async def help_command(message: Message):
     await message.answer(HELP_TEXT)
-
-
-@router.message(F.text == "📄 Правила и безопасность")
-async def rules_button(message: Message):
-    await message.answer(RULES_TEXT)
 
 
 @router.message(F.text == "🔔 Напоминания")
