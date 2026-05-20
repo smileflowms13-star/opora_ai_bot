@@ -122,6 +122,7 @@ async def cancel_settings_action(message: Message):
 
 
 @router.message(F.text == SETTINGS_BACK_BUTTON)
+@router.message(F.text.contains("\u0413\u043b\u0430\u0432\u043d\u043e\u0435 \u043c\u0435\u043d\u044e"))
 async def back_to_main_menu(message: Message):
     await message.answer(
         "Выберите, с чего начнём:",
