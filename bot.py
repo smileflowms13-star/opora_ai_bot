@@ -41,8 +41,8 @@ async def main():
     dp.include_router(info.router)
 
     # Fallback router must be registered last.
-    dp.include_router(fallback.router)
     dp.include_router(exercises_router)
+    dp.include_router(fallback.router)
 
     logger.info("Routers registered")
     logger.info("Deleting webhook and dropping pending updates")
@@ -70,6 +70,7 @@ if __name__ == "__main__":
         raise
     else:
         logger.info("Opora AI bot stopped")
+
 
 
 

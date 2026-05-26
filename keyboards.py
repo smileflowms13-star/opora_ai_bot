@@ -17,6 +17,7 @@ from texts import (
     FOCUS_DIARY_BUTTON,
     FOCUS_OTHER_BUTTON,
     DAILY_REMINDER_BUTTON,
+    BREATHING_BUTTON,
 
 )
 
@@ -118,6 +119,9 @@ exercises_menu = ReplyKeyboardMarkup(
             KeyboardButton(text="🎯 Зона контроля"),
             KeyboardButton(text="💛 Самосострадание"),
         ],
+                [
+            KeyboardButton(text=BREATHING_BUTTON),
+        ],
         [
             KeyboardButton(text="⬅️ Главное меню"),
         ],
@@ -180,4 +184,5 @@ def breathing_finish_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Вернуться в меню", callback_data="breathing_exit")],
     ])
+
 
