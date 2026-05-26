@@ -1,4 +1,5 @@
-﻿from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+﻿
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButtonfrom aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from texts import CONSENT_ACCEPT_BUTTON, CONSENT_DECLINE_BUTTON
 from texts import (
     SETTINGS_RULES_BUTTON,
@@ -168,3 +169,13 @@ withdraw_consent_confirm_menu = ReplyKeyboardMarkup(
     resize_keyboard=True,
     input_field_placeholder="Подтвердите отзыв согласия",
 )
+def breathing_continue_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Продолжить", callback_data="breathing_next")],
+        [InlineKeyboardButton(text="🚪 Выйти", callback_data="breathing_exit")],
+    ])
+
+def breathing_finish_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="Вернуться в меню", callback_data="breathing_exit")],
+    ])
