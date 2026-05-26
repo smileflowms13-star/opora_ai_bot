@@ -1718,6 +1718,55 @@ def get_user_focus(telegram_id: int) -> Optional[str]:
         conn.close()
 
 
+
+def set_daily_reminder(telegram_id: int, enabled: bool, reminder_time: Optional[str] = None) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    if enabled and reminder_time:
+        cursor.execute(
+            """
+            UPDATE users
+            SET daily_reminder_enabled = 1,
+                daily_reminder_time = ?,
+                updated_at = datetime('now')
+            WHERE telegram_id = ?
+            """,
+            (reminder_time, telegram_id),
+        )
+    else:
+        cursor.execute(
+            """
+            UPDATE users
+            SET daily_reminder_enabled = 0,
+                updated_at = datetime('now')
+            WHERE telegram_id = ?
+            """,
+            (telegram_id,),
+        )
+    conn.commit()
+    conn.close()
+
+def get_daily_reminder_settings(telegram_id: int) -> dict:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        SELECT daily_reminder_enabled, daily_reminder_time
+        FROM users
+        WHERE telegram_id = ?
+        """,
+        (telegram_id,),
+    )
+    row = cursor.fetchone()
+    conn.close()
+    if row:
+        return {
+            'enabled': bool(row[0]),
+            'time': row[1] if row[1] else '21:00',
+        }
+    return {'enabled': False, 'time': '21:00'}
+
+
 def add_user(telegram_id: int, username=None, first_name=None) -> int:
     """
     Создаёт пользователя, если его нет, или обновляет username/first_name.
