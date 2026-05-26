@@ -180,3 +180,4 @@ def breathing_finish_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Вернуться в меню", callback_data="breathing_exit")],
     ])
+
