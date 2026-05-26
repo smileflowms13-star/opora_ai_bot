@@ -117,6 +117,12 @@ def init_db() -> None:
     if "first_name" not in user_columns:
         _add_column_if_missing(cursor, "users", "first_name", "TEXT")
 
+    if "daily_reminder_enabled" not in user_columns:
+        _add_column_if_missing(cursor, "users", "daily_reminder_enabled", "INTEGER DEFAULT 0")
+
+    if "daily_reminder_time" not in user_columns:
+        _add_column_if_missing(cursor, "users", "daily_reminder_time", "TEXT")
+
     if "age_confirmed" not in user_columns:
         _add_column_if_missing(cursor, "users", "age_confirmed", "INTEGER DEFAULT 0")
 
