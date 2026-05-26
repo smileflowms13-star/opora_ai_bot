@@ -6,7 +6,7 @@ from aiogram.enums import ChatAction
 from aiogram.types import Message
 
 from ai_client import generate_ai_reply
-from database import add_user, save_message, get_recent_messages
+from database import add_user, save_message, get_recent_messages, get_user_focus
 from safety import is_high_risk
 from texts import CRISIS_TEXT
 
@@ -100,9 +100,12 @@ async def fallback_message(message: Message):
             action=ChatAction.TYPING,
         )
 
+        user_focus = get_user_focus(telegram_id)
+
         ai_answer = await generate_ai_reply(
             user_text=user_text,
             history=history,
+            user_focus=user_focus,
         )
 
         ai_answer = (ai_answer or "").strip()
