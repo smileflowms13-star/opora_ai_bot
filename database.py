@@ -735,7 +735,7 @@ def get_recent_messages(
     Return recent messages for AI context.
 
     Compatibility:
-    - get_recent_messages(telegram_id) ?? fallback.py;
+    - get_recent_messages(telegram_id) for fallback.py;
     - get_recent_messages(user_id=...);
     - get_recent_messages(telegram_id=...).
 
