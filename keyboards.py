@@ -14,6 +14,7 @@ from texts import (
     FOCUS_RELAX_BUTTON,
     FOCUS_DIARY_BUTTON,
     FOCUS_OTHER_BUTTON,
+    DAILY_REMINDER_BUTTON,
 
 )
 
@@ -141,6 +142,7 @@ settings_menu = ReplyKeyboardMarkup(
         [KeyboardButton(text=SETTINGS_PRIVACY_BUTTON)],
         [KeyboardButton(text=SETTINGS_WITHDRAW_CONSENT_BUTTON)],
         [KeyboardButton(text=SETTINGS_DELETE_DATA_BUTTON)],
+        [KeyboardButton(text=DAILY_REMINDER_BUTTON)],
         [KeyboardButton(text=SETTINGS_BACK_BUTTON)],
     ],
     resize_keyboard=True,
