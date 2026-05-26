@@ -16,3 +16,10 @@ data/*.db-shm
 .vscode/
 logs/
 *.log
+
+*.db
+*.sqlite
+*.sqlite3
+*.db-journal
+*.db-wal
+*.db-shm
