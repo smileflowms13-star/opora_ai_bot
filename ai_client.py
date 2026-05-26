@@ -1,8 +1,10 @@
-import logging
+﻿import logging
 
 from openai import AsyncOpenAI
 
 from config import AI_API_KEY, AI_BASE_URL, AI_MODEL
+from typing import Optional
+
 from prompts import SYSTEM_PROMPT
 
 
@@ -57,7 +59,7 @@ def _prepare_history(history):
     return clean_messages
 
 
-async def generate_ai_reply(user_text: str, history=None) -> str:
+async def generate_ai_reply(user_text: str, history=None, user_focus: Optional[str] = None) -> str:
     """
     Основная функция ответа AI.
 
@@ -89,6 +91,15 @@ async def generate_ai_reply(user_text: str, history=None) -> str:
             "content": SYSTEM_PROMPT,
         }
     ]
+
+    # Если пользователь указал фокус внимания, добавляем уточняющую инструкцию
+    if user_focus:
+        messages.append(
+            {
+                "role": "system",
+                "content": f"Пользователь сообщил, что его основной запрос: {user_focus}. Учитывай это в ответах, адаптируй упражнения и стиль поддержки под этот запрос.",
+            }
+        )
 
     clean_history = _prepare_history(history)
 
