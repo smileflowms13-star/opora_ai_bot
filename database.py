@@ -1692,6 +1692,26 @@ def save_onboarding(user_id: int, focus_area: str) -> None:
     conn.close()
 
 
+
+def get_user_focus(telegram_id: int) -> Optional[str]:
+    conn = get_connection()
+    cursor = conn.cursor()
+    try:
+        cursor.execute(
+            """
+            SELECT o.focus_area
+            FROM onboarding o
+            JOIN users u ON o.user_id = u.id
+            WHERE u.telegram_id = ?
+            """,
+            (telegram_id,),
+        )
+        row = cursor.fetchone()
+        return row[0] if row else None
+    finally:
+        conn.close()
+
+
 def add_user(telegram_id: int, username=None, first_name=None) -> int:
     """
     Создаёт пользователя, если его нет, или обновляет username/first_name.
