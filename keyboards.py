@@ -1,5 +1,4 @@
-﻿
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+﻿from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from texts import CONSENT_ACCEPT_BUTTON, CONSENT_DECLINE_BUTTON
 from texts import (
@@ -18,10 +17,8 @@ from texts import (
     FOCUS_OTHER_BUTTON,
     DAILY_REMINDER_BUTTON,
     BREATHING_BUTTON,
-
+    GROUNDING_BUTTON,
 )
-
-
 
 focus_menu = ReplyKeyboardMarkup(
     keyboard=[
@@ -33,7 +30,6 @@ focus_menu = ReplyKeyboardMarkup(
     ],
     resize_keyboard=True
 )
-
 
 main_menu = ReplyKeyboardMarkup(
     keyboard=[
@@ -57,7 +53,6 @@ main_menu = ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
-
 sos_menu = ReplyKeyboardMarkup(
     keyboard=[
         [
@@ -78,7 +73,6 @@ sos_menu = ReplyKeyboardMarkup(
     ],
     resize_keyboard=True
 )
-
 
 relationships_menu = ReplyKeyboardMarkup(
     keyboard=[
@@ -104,12 +98,11 @@ relationships_menu = ReplyKeyboardMarkup(
     resize_keyboard=True
 )
 
-
 exercises_menu = ReplyKeyboardMarkup(
     keyboard=[
         [
             KeyboardButton(text="🌬 Дыхание 4–6"),
-            KeyboardButton(text="👀 5–4–3–2–1"),
+            KeyboardButton(text=GROUNDING_BUTTON),   # <-- исправлено: теперь используется константа
         ],
         [
             KeyboardButton(text="🛑 STOP"),
@@ -119,7 +112,7 @@ exercises_menu = ReplyKeyboardMarkup(
             KeyboardButton(text="🎯 Зона контроля"),
             KeyboardButton(text="💛 Самосострадание"),
         ],
-                [
+        [
             KeyboardButton(text=BREATHING_BUTTON),
         ],
         [
@@ -128,10 +121,6 @@ exercises_menu = ReplyKeyboardMarkup(
     ],
     resize_keyboard=True
 )
-
-
-from texts import CONSENT_ACCEPT_BUTTON, CONSENT_DECLINE_BUTTON
-
 
 onboarding_menu = ReplyKeyboardMarkup(
     keyboard=[
@@ -142,6 +131,7 @@ onboarding_menu = ReplyKeyboardMarkup(
     one_time_keyboard=False,
     input_field_placeholder="Подтвердите возраст и правила",
 )
+
 settings_menu = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text=SETTINGS_RULES_BUTTON)],
@@ -155,7 +145,6 @@ settings_menu = ReplyKeyboardMarkup(
     input_field_placeholder="Выберите пункт настроек",
 )
 
-
 delete_data_confirm_menu = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text=DELETE_DATA_CONFIRM_BUTTON)],
@@ -165,7 +154,6 @@ delete_data_confirm_menu = ReplyKeyboardMarkup(
     input_field_placeholder="Подтвердите удаление данных",
 )
 
-
 withdraw_consent_confirm_menu = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text=WITHDRAW_CONSENT_CONFIRM_BUTTON)],
@@ -174,6 +162,8 @@ withdraw_consent_confirm_menu = ReplyKeyboardMarkup(
     resize_keyboard=True,
     input_field_placeholder="Подтвердите отзыв согласия",
 )
+
+# Инлайн-клавиатуры для дыхательного упражнения
 def breathing_continue_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Продолжить", callback_data="breathing_next")],
@@ -185,4 +175,14 @@ def breathing_finish_keyboard():
         [InlineKeyboardButton(text="Вернуться в меню", callback_data="breathing_exit")],
     ])
 
+# Инлайн-клавиатуры для упражнения 5-4-3-2-1
+def grounding_continue_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="▶️ Продолжить", callback_data="grounding_next")],
+        [InlineKeyboardButton(text="🚪 Выйти", callback_data="grounding_exit")],
+    ])
 
+def grounding_finish_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🏠 В главное меню", callback_data="grounding_exit")],
+    ])
