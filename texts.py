@@ -102,6 +102,30 @@ WITHDRAW_CONSENT_CONFIRM_BUTTON = "✅ Да, отозвать согласие"
 SETTINGS_CANCEL_BUTTON = "❌ Отмена"
 
 SETTINGS_TEXT = """
+
+FOCUS_QUESTION_TEXT = """
+Спасибо, что доверяешь мне.
+
+Чтобы я мог лучше помочь, скажи, что для тебя сейчас важнее всего:
+"""
+
+FOCUS_ANXIETY_BUTTON = '☀️ Справиться с тревогой'
+FOCUS_RELATIONSHIPS_BUTTON = '💔 Отношения'
+FOCUS_RELAX_BUTTON = '🧘 Научиться расслабляться'
+FOCUS_DIARY_BUTTON = '📝 Вести дневник'
+FOCUS_OTHER_BUTTON = '❓ Другое'
+
+FOCUS_QUESTION_TEXT = """
+Спасибо, что доверяешь мне.
+
+Чтобы я мог лучше помочь, скажи, что для тебя сейчас важнее всего:
+"""
+
+FOCUS_ANXIETY_BUTTON = '🌪️ Справиться с тревогой'
+FOCUS_RELATIONSHIPS_BUTTON = '💔 Отношения'
+FOCUS_RELAX_BUTTON = '🧘 Научиться расслабляться'
+FOCUS_DIARY_BUTTON = '📝 Вести дневник'
+FOCUS_OTHER_BUTTON = '❓ Другое'
 ⚙️ Настройки
 
 Здесь можно посмотреть правила использования, информацию о конфиденциальности, отозвать согласие или удалить свои данные.

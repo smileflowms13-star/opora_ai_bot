@@ -1,4 +1,4 @@
-from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+﻿from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from texts import CONSENT_ACCEPT_BUTTON, CONSENT_DECLINE_BUTTON
 from texts import (
     SETTINGS_RULES_BUTTON,
@@ -9,6 +9,25 @@ from texts import (
     DELETE_DATA_CONFIRM_BUTTON,
     WITHDRAW_CONSENT_CONFIRM_BUTTON,
     SETTINGS_CANCEL_BUTTON,
+    FOCUS_ANXIETY_BUTTON,
+    FOCUS_RELATIONSHIPS_BUTTON,
+    FOCUS_RELAX_BUTTON,
+    FOCUS_DIARY_BUTTON,
+    FOCUS_OTHER_BUTTON,
+
+)
+
+
+
+focus_menu = ReplyKeyboardMarkup(
+    keyboard=[
+        [KeyboardButton(text=FOCUS_ANXIETY_BUTTON)],
+        [KeyboardButton(text=FOCUS_RELATIONSHIPS_BUTTON)],
+        [KeyboardButton(text=FOCUS_RELAX_BUTTON)],
+        [KeyboardButton(text=FOCUS_DIARY_BUTTON)],
+        [KeyboardButton(text=FOCUS_OTHER_BUTTON)],
+    ],
+    resize_keyboard=True
 )
 
 
