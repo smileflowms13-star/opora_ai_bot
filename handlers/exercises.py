@@ -57,10 +57,11 @@ async def exit_breathing(callback: CallbackQuery, state: FSMContext):
     logging.info(f"User {callback.from_user.id} exited breathing exercise")
     await state.clear()
     await callback.message.edit_text("Главное меню", reply_markup=None)
-    await callback.message.answer("Вы вернулись в главное меню.", reply_markup=main_menu())
+    await callback.message.answer("Вы вернулись в главное меню.", reply_markup=main_menu)
     await callback.answer()
 
 @router.message(Command("cancel"))
 async def cancel_breathing(message: Message, state: FSMContext):
     await state.clear()
-    await message.answer("Упражнение прервано. Ты в главном меню.", reply_markup=main_menu())
+    await message.answer("Упражнение прервано. Ты в главном меню.", reply_markup=main_menu)
+
