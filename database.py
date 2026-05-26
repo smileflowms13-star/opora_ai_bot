@@ -1,4 +1,4 @@
-﻿import sqlite3
+import sqlite3
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
@@ -490,80 +490,202 @@ def save_message(
     is_high_risk: bool = False,
     **kwargs: Any,
 ) -> int:
-    if user_id is None:
-        user_id = telegram_id
+    """
+    Save a message to messages and return inserted row id.
 
-    if user_id is None:
-        raise ValueError("save_message: user_id or telegram_id is required")
+    Compatibility:
+    - New calls: save_message(user_id=..., ...)
+    - Old fallback.py calls: save_message(telegram_id, role, content)
+    - save_message(telegram_id=..., ...)
+    - save_message(text=...) / save_message(message=...)
 
+    Important:
+    - messages.user_id stores internal users.id.
+    - If Telegram ID is provided, resolve users.id via add_user().
+    - High-risk user messages are not saved into AI history,
+      preserving the safe behavior of the previous active function.
+    """
     if content is None:
         content = text
 
     if content is None:
-        content = kwargs.get("message") or ""
+        content = (
+            kwargs.get("message")
+            or kwargs.get("message_text")
+            or kwargs.get("content")
+            or ""
+        )
+
+    if content is None:
+        return 0
+
+    content = str(content).strip()
+
+    if not content:
+        return 0
 
     role = role or "user"
 
     if role == "bot":
         role = "assistant"
 
+    # Preserve safe behavior from the previous active function:
+    # high-risk user messages are not written into AI history.
+    detected_high_risk = bool(is_high_risk)
+
+    if role == "user" and not detected_high_risk:
+        try:
+            from safety import is_high_risk as _is_high_risk
+
+            detected_high_risk = bool(_is_high_risk(content))
+        except Exception:
+            detected_high_risk = False
+
+    if role == "user" and detected_high_risk:
+        return 0
+
+    original_user_id = user_id
+    resolved_telegram_id = telegram_id
+    internal_user_id: Optional[int] = None
+
+    def _as_int(value: Any) -> Optional[int]:
+        try:
+            if value is None:
+                return None
+            return int(value)
+        except Exception:
+            return None
+
+    def _looks_like_telegram_id(value: Any) -> bool:
+        value_int = _as_int(value)
+        return value_int is not None and abs(value_int) >= 100000
+
+    if resolved_telegram_id is not None:
+        resolved_telegram_id = _as_int(resolved_telegram_id)
+
+        if resolved_telegram_id is None:
+            raise ValueError("save_message: telegram_id must be an integer")
+
+        internal_user_id = add_user(resolved_telegram_id)
+
+    elif original_user_id is not None:
+        original_user_id_int = _as_int(original_user_id)
+
+        if original_user_id_int is None:
+            raise ValueError("save_message: user_id must be an integer")
+
+        # user_id can be:
+        # 1) real internal users.id;
+        # 2) Telegram ID from the old positional fallback.py call.
+        conn_lookup = get_connection()
+        cursor_lookup = conn_lookup.cursor()
+
+        try:
+            user_columns = _get_table_columns(cursor_lookup, "users")
+
+            row_by_internal_id = None
+            row_by_telegram_id = None
+
+            if {"id", "telegram_id"}.issubset(user_columns):
+                row_by_internal_id = cursor_lookup.execute(
+                    "SELECT telegram_id FROM users WHERE id = ?",
+                    (original_user_id_int,),
+                ).fetchone()
+
+                row_by_telegram_id = cursor_lookup.execute(
+                    "SELECT id FROM users WHERE telegram_id = ?",
+                    (original_user_id_int,),
+                ).fetchone()
+        finally:
+            conn_lookup.close()
+
+        # If the value looks like Telegram ID or is already found as telegram_id,
+        # treat it as Telegram ID. This keeps compatibility with fallback.py.
+        if row_by_telegram_id is not None and (
+            row_by_internal_id is None or _looks_like_telegram_id(original_user_id_int)
+        ):
+            resolved_telegram_id = original_user_id_int
+            internal_user_id = int(row_by_telegram_id[0])
+
+        elif row_by_internal_id is not None:
+            internal_user_id = original_user_id_int
+            resolved_telegram_id = _as_int(row_by_internal_id[0])
+
+        else:
+            # If no internal user exists with this id, treat it as Telegram ID
+            # for the old positional API and create a users row.
+            resolved_telegram_id = original_user_id_int
+            internal_user_id = add_user(resolved_telegram_id)
+
+    else:
+        raise ValueError("save_message: user_id or telegram_id is required")
+
+    if internal_user_id is None:
+        raise ValueError("save_message: could not resolve internal user id")
+
     conn = get_connection()
     cursor = conn.cursor()
 
-    columns = _get_table_columns(cursor, "messages")
+    try:
+        columns = _get_table_columns(cursor, "messages")
 
-    fields = []
-    values = []
+        fields: list[str] = []
+        values: list[Any] = []
 
-    if "user_id" in columns:
-        fields.append("user_id")
-        values.append(user_id)
+        if "user_id" in columns:
+            fields.append("user_id")
+            values.append(internal_user_id)
 
-    if "telegram_id" in columns:
-        fields.append("telegram_id")
-        values.append(telegram_id or user_id)
+        if "telegram_id" in columns and resolved_telegram_id is not None:
+            fields.append("telegram_id")
+            values.append(resolved_telegram_id)
 
-    if "role" in columns:
-        fields.append("role")
-        values.append(role)
+        if "role" in columns:
+            fields.append("role")
+            values.append(role)
 
-    if "content" in columns:
-        fields.append("content")
-        values.append(content)
+        content_column_found = False
 
-    if "text" in columns:
-        fields.append("text")
-        values.append(content)
+        for column_name in ("content", "text", "message_text", "message"):
+            if column_name in columns:
+                fields.append(column_name)
+                values.append(content)
+                content_column_found = True
 
-    if "message_text" in columns:
-        fields.append("message_text")
-        values.append(content)
+        if not content_column_found:
+            return 0
 
-    if "is_high_risk" in columns:
-        fields.append("is_high_risk")
-        values.append(1 if is_high_risk else 0)
+        if "is_high_risk" in columns:
+            fields.append("is_high_risk")
+            values.append(1 if detected_high_risk else 0)
 
-    if "created_at" in columns:
-        fields.append("created_at")
-        values.append(_now())
+        if "created_at" in columns:
+            fields.append("created_at")
+            values.append(_now())
 
-    placeholders = ", ".join(["?"] * len(values))
-    fields_sql = ", ".join(fields)
+        if not fields:
+            return 0
 
-    cursor.execute(
-        f"""
-        INSERT INTO messages ({fields_sql})
-        VALUES ({placeholders})
-        """,
-        values,
-    )
+        placeholders = ", ".join(["?"] * len(values))
+        fields_sql = ", ".join(fields)
 
-    message_id = int(cursor.lastrowid)
+        cursor.execute(
+            f"""
+            INSERT INTO messages ({fields_sql})
+            VALUES ({placeholders})
+            """,
+            values,
+        )
 
-    conn.commit()
-    conn.close()
+        message_id = int(cursor.lastrowid)
 
-    return message_id
+        conn.commit()
+
+        return message_id
+
+    finally:
+        conn.close()
+
 
 
 def add_message(
@@ -609,57 +731,147 @@ def get_recent_messages(
     telegram_id: Optional[int] = None,
     exclude_high_risk: bool = True,
 ) -> list[dict[str, str]]:
-    if user_id is None:
-        user_id = telegram_id
+    """
+    Return recent messages for AI context.
 
-    if user_id is None:
+    Compatibility:
+    - get_recent_messages(telegram_id) ?? fallback.py;
+    - get_recent_messages(user_id=...);
+    - get_recent_messages(telegram_id=...).
+
+    Handles:
+    - new schema: messages.user_id = internal users.id;
+    - old/mixed schema: messages.user_id may equal Telegram ID;
+    - messages.telegram_id, if present.
+    """
+    def _as_int(value: Any) -> Optional[int]:
+        try:
+            if value is None:
+                return None
+            return int(value)
+        except Exception:
+            return None
+
+    user_id_int = _as_int(user_id)
+    telegram_id_int = _as_int(telegram_id)
+
+    if user_id is not None and user_id_int is None:
+        return []
+
+    if telegram_id is not None and telegram_id_int is None:
+        return []
+
+    if user_id_int is None and telegram_id_int is None:
+        return []
+
+    try:
+        limit_int = int(limit)
+    except Exception:
+        limit_int = 12
+
+    if limit_int <= 0:
         return []
 
     conn = get_connection()
-    cursor = conn.cursor()
 
-    columns = _get_table_columns(cursor, "messages")
-    user_ids = _get_user_identifiers(cursor, int(user_id))
+    try:
+        try:
+            conn.row_factory = sqlite3.Row
+        except Exception:
+            pass
 
-    where_parts = []
-    params: list[Any] = []
+        cursor = conn.cursor()
 
-    if "user_id" in columns:
-        placeholders = ", ".join(["?"] * len(user_ids))
-        where_parts.append(f"user_id IN ({placeholders})")
-        params.extend(user_ids)
+        message_columns = _get_table_columns(cursor, "messages")
+        user_columns = _get_table_columns(cursor, "users")
 
-    if "telegram_id" in columns:
-        where_parts.append("telegram_id = ?")
-        params.append(user_id)
+        candidate_user_ids: set[int] = set()
+        candidate_telegram_ids: set[int] = set()
 
-    if not where_parts:
+        if telegram_id_int is not None:
+            candidate_telegram_ids.add(telegram_id_int)
+
+            # Old data may store Telegram ID directly in messages.user_id.
+            candidate_user_ids.add(telegram_id_int)
+
+            if {"id", "telegram_id"}.issubset(user_columns):
+                row = cursor.execute(
+                    "SELECT id FROM users WHERE telegram_id = ?",
+                    (telegram_id_int,),
+                ).fetchone()
+
+                if row is not None:
+                    candidate_user_ids.add(int(row[0]))
+
+        if user_id_int is not None:
+            # user_id can be internal id or Telegram ID from the old positional API.
+            candidate_user_ids.add(user_id_int)
+
+            if {"id", "telegram_id"}.issubset(user_columns):
+                row_by_internal_id = cursor.execute(
+                    "SELECT telegram_id FROM users WHERE id = ?",
+                    (user_id_int,),
+                ).fetchone()
+
+                if row_by_internal_id is not None and row_by_internal_id[0] is not None:
+                    candidate_telegram_ids.add(int(row_by_internal_id[0]))
+
+                row_by_telegram_id = cursor.execute(
+                    "SELECT id FROM users WHERE telegram_id = ?",
+                    (user_id_int,),
+                ).fetchone()
+
+                if row_by_telegram_id is not None:
+                    candidate_telegram_ids.add(user_id_int)
+                    candidate_user_ids.add(int(row_by_telegram_id[0]))
+
+        where_parts: list[str] = []
+        params: list[Any] = []
+
+        if "user_id" in message_columns and candidate_user_ids:
+            ids = sorted(candidate_user_ids)
+            placeholders = ", ".join(["?"] * len(ids))
+            where_parts.append(f"user_id IN ({placeholders})")
+            params.extend(ids)
+
+        if "telegram_id" in message_columns and candidate_telegram_ids:
+            ids = sorted(candidate_telegram_ids)
+            placeholders = ", ".join(["?"] * len(ids))
+            where_parts.append(f"telegram_id IN ({placeholders})")
+            params.extend(ids)
+
+        if not where_parts:
+            return []
+
+        where_sql = " OR ".join(where_parts)
+
+        if exclude_high_risk and "is_high_risk" in message_columns:
+            where_sql = f"({where_sql}) AND COALESCE(is_high_risk, 0) = 0"
+
+        if "created_at" in message_columns and "id" in message_columns:
+            order_sql = "ORDER BY created_at DESC, id DESC"
+        elif "created_at" in message_columns:
+            order_sql = "ORDER BY created_at DESC"
+        elif "id" in message_columns:
+            order_sql = "ORDER BY id DESC"
+        else:
+            order_sql = ""
+
+        cursor.execute(
+            f"""
+            SELECT *
+            FROM messages
+            WHERE {where_sql}
+            {order_sql}
+            LIMIT ?
+            """,
+            [*params, limit_int],
+        )
+
+        rows = cursor.fetchall()
+
+    finally:
         conn.close()
-        return []
-
-    where_sql = " OR ".join(where_parts)
-
-    if exclude_high_risk and "is_high_risk" in columns:
-        where_sql = f"({where_sql}) AND COALESCE(is_high_risk, 0) = 0"
-
-    order_sql = "ORDER BY id DESC"
-
-    if "created_at" in columns:
-        order_sql = "ORDER BY created_at DESC, id DESC"
-
-    cursor.execute(
-        f"""
-        SELECT *
-        FROM messages
-        WHERE {where_sql}
-        {order_sql}
-        LIMIT ?
-        """,
-        [*params, limit],
-    )
-
-    rows = cursor.fetchall()
-    conn.close()
 
     rows = list(reversed(rows))
 
@@ -671,10 +883,16 @@ def get_recent_messages(
         if role == "bot":
             role = "assistant"
 
+        role = str(role)
+
+        if role not in ("user", "assistant", "system"):
+            continue
+
         content = (
             _row_value(row, "content")
             or _row_value(row, "text")
             or _row_value(row, "message_text")
+            or _row_value(row, "message")
             or ""
         )
 
@@ -685,12 +903,13 @@ def get_recent_messages(
 
         result.append(
             {
-                "role": str(role),
+                "role": role,
                 "content": content,
             }
         )
 
     return result
+
 
 
 def save_diary_entry(
@@ -1551,211 +1770,6 @@ def add_user(telegram_id: int, username=None, first_name=None) -> int:
         conn.commit()
 
         return int(cursor.lastrowid)
-
-    finally:
-        conn.close()
-
-
-def save_message(telegram_id: int, role: str, content: str) -> None:
-    """
-    Сохраняет сообщение в таблицу messages.
-
-    Совместимая функция для fallback.py.
-    Работает с разными схемами:
-    - messages.telegram_id;
-    - messages.user_id;
-    - messages.content / text / message.
-    """
-    import sqlite3
-    from datetime import datetime
-
-    if content is None:
-        return
-
-    content = str(content).strip()
-
-    if not content:
-        return
-
-    # Дополнительная защита: high-risk пользовательские сообщения не сохраняем в AI-историю.
-    try:
-        from safety import is_high_risk
-
-        if role == "user" and is_high_risk(content):
-            return
-    except Exception:
-        pass
-
-    db_path = (
-        globals().get("DB_PATH")
-        or globals().get("DATABASE_PATH")
-        or globals().get("DATABASE")
-        or "data/opora.db"
-    )
-
-    now = datetime.now().isoformat(timespec="seconds")
-
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-
-    try:
-        internal_user_id = add_user(telegram_id)
-
-        message_columns = {
-            row[1]
-            for row in cursor.execute("PRAGMA table_info(messages)").fetchall()
-        }
-
-        insert_columns = []
-        values = []
-
-        if "telegram_id" in message_columns:
-            insert_columns.append("telegram_id")
-            values.append(telegram_id)
-
-        if "user_id" in message_columns:
-            insert_columns.append("user_id")
-            values.append(internal_user_id)
-
-        if "role" in message_columns:
-            insert_columns.append("role")
-            values.append(role)
-
-        if "content" in message_columns:
-            insert_columns.append("content")
-            values.append(content)
-        elif "text" in message_columns:
-            insert_columns.append("text")
-            values.append(content)
-        elif "message" in message_columns:
-            insert_columns.append("message")
-            values.append(content)
-        else:
-            return
-
-        if "created_at" in message_columns:
-            insert_columns.append("created_at")
-            values.append(now)
-
-        placeholders = ", ".join(["?"] * len(insert_columns))
-
-        cursor.execute(
-            f"""
-            INSERT INTO messages ({', '.join(insert_columns)})
-            VALUES ({placeholders})
-            """,
-            values,
-        )
-
-        conn.commit()
-
-    finally:
-        conn.close()
-
-
-def get_recent_messages(telegram_id: int, limit: int = 12) -> list:
-    """
-    Возвращает последние сообщения пользователя для AI-контекста.
-
-    Формат:
-    [
-        {"role": "user", "content": "..."},
-        {"role": "assistant", "content": "..."}
-    ]
-
-    Совместимая функция для fallback.py.
-    """
-    import sqlite3
-
-    db_path = (
-        globals().get("DB_PATH")
-        or globals().get("DATABASE_PATH")
-        or globals().get("DATABASE")
-        or "data/opora.db"
-    )
-
-    conn = sqlite3.connect(db_path)
-    cursor = conn.cursor()
-
-    try:
-        message_columns = {
-            row[1]
-            for row in cursor.execute("PRAGMA table_info(messages)").fetchall()
-        }
-
-        if "role" not in message_columns:
-            return []
-
-        if "content" in message_columns:
-            content_column = "content"
-        elif "text" in message_columns:
-            content_column = "text"
-        elif "message" in message_columns:
-            content_column = "message"
-        else:
-            return []
-
-        conditions = []
-        params = []
-
-        if "telegram_id" in message_columns:
-            conditions.append("telegram_id = ?")
-            params.append(telegram_id)
-
-        if "user_id" in message_columns:
-            user_row = cursor.execute(
-                "SELECT id FROM users WHERE telegram_id = ?",
-                (telegram_id,),
-            ).fetchone()
-
-            if user_row:
-                internal_user_id = int(user_row[0])
-                conditions.append("user_id = ?")
-                params.append(internal_user_id)
-
-            # На случай старой/смешанной схемы, где user_id мог быть равен telegram_id
-            conditions.append("user_id = ?")
-            params.append(telegram_id)
-
-        if not conditions:
-            return []
-
-        order_column = "created_at" if "created_at" in message_columns else "id"
-
-        query = f"""
-            SELECT role, {content_column}
-            FROM messages
-            WHERE ({' OR '.join(conditions)})
-            ORDER BY {order_column} DESC
-            LIMIT ?
-        """
-
-        params.append(limit)
-
-        rows = cursor.execute(query, params).fetchall()
-
-        messages = []
-
-        for role, content in reversed(rows):
-            if role not in ("user", "assistant", "system"):
-                continue
-
-            if content is None:
-                continue
-
-            content = str(content).strip()
-
-            if not content:
-                continue
-
-            messages.append(
-                {
-                    "role": role,
-                    "content": content,
-                }
-            )
-
-        return messages
 
     finally:
         conn.close()
