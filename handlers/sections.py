@@ -3,9 +3,7 @@ from aiogram.types import Message
 
 from keyboards import relationships_menu, exercises_menu
 
-
 router = Router()
-
 
 @router.message(F.text == "💬 Поговорить")
 async def talk_button(message: Message):
@@ -19,10 +17,6 @@ async def talk_button(message: Message):
         "Скоро мы подключим AI, и я смогу отвечать более гибко."
     )
 
-
-
-
-
 @router.message(F.text == "💔 Отношения")
 async def relationships_button(message: Message):
     await message.answer(
@@ -30,7 +24,6 @@ async def relationships_button(message: Message):
         "Выбери, что ближе:",
         reply_markup=relationships_menu
     )
-
 
 @router.message(F.text == "💔 Меня игнорируют")
 async def ignored_button(message: Message):
@@ -46,7 +39,6 @@ async def ignored_button(message: Message):
         "Какая мысль звучит сильнее всего?"
     )
 
-
 @router.message(F.text == "😡 Я ревную")
 async def jealousy_button(message: Message):
     await message.answer(
@@ -55,7 +47,6 @@ async def jealousy_button(message: Message):
         "Что именно запустило ревность?\n"
         "Например: сообщение, лайк, молчание, встреча, сравнение, фантазия?"
     )
-
 
 @router.message(F.text == "🥶 Партнёр холодный")
 async def cold_partner_button(message: Message):
@@ -71,7 +62,6 @@ async def cold_partner_button(message: Message):
         "— другое?"
     )
 
-
 @router.message(F.text == "🧲 Не могу отпустить")
 async def cannot_let_go_button(message: Message):
     await message.answer(
@@ -85,7 +75,6 @@ async def cannot_let_go_button(message: Message):
         "— незавершённый разговор?"
     )
 
-
 @router.message(F.text == "🧨 Мы постоянно ссоримся")
 async def conflicts_button(message: Message):
     await message.answer(
@@ -98,7 +87,6 @@ async def conflicts_button(message: Message):
         "Можешь ответить свободно одним сообщением."
     )
 
-
 @router.message(F.text == "🚧 Хочу поставить границу")
 async def boundary_button(message: Message):
     await message.answer(
@@ -107,7 +95,6 @@ async def boundary_button(message: Message):
         "«Когда происходит ___, я чувствую ___. Мне важно ___. Поэтому я прошу/буду ___».\n\n"
         "Напиши ситуацию, и я помогу сформулировать границу."
     )
-
 
 @router.message(F.text == "✉️ Помоги написать сообщение")
 async def help_write_message_button(message: Message):
@@ -122,91 +109,9 @@ async def help_write_message_button(message: Message):
         "Мне бы хотелось ___. Давай обсудим, как нам лучше поступить?»"
     )
 
-
 @router.message(F.text == "🌿 Упражнения")
 async def exercises_button(message: Message):
     await message.answer(
         "Выбери упражнение:",
         reply_markup=exercises_menu
-    )
-
-
-@router.message(F.text == "🌬 Дыхание 4–6")
-async def breathing_exercise(message: Message):
-    await message.answer(
-        "Упражнение «Дыхание 4–6»\n\n"
-        "Подходит при тревоге, напряжении, перегрузе.\n\n"
-        "1. Сядь удобно.\n"
-        "2. Поставь стопы на пол.\n"
-        "3. Сделай вдох на 4 счёта.\n"
-        "4. Сделай выдох на 6 счётов.\n"
-        "5. Повтори 6–8 раз.\n\n"
-        "После этого заметь: стало ли легче хотя бы на 1%?"
-    )
-
-
-@router.message(F.text == "👀 5–4–3–2–1")
-async def grounding_exercise(message: Message):
-    await message.answer(
-        "Упражнение «5–4–3–2–1»\n\n"
-        "Помогает вернуться в настоящий момент.\n\n"
-        "Назови:\n\n"
-        "5 предметов, которые видишь;\n"
-        "4 ощущения в теле;\n"
-        "3 звука;\n"
-        "2 запаха;\n"
-        "1 вкус или одну вещь, которая сейчас в безопасности.\n\n"
-        "Делай медленно. Не нужно идеально."
-    )
-
-
-@router.message(F.text == "🛑 STOP")
-async def stop_exercise(message: Message):
-    await message.answer(
-        "Техника STOP\n\n"
-        "S — Stop: остановись.\n"
-        "T — Take a breath: сделай медленный вдох и выдох.\n"
-        "O — Observe: заметь, что происходит в теле, мыслях и эмоциях.\n"
-        "P — Proceed: выбери следующий маленький шаг.\n\n"
-        "Вопрос: какой самый бережный следующий шаг ты можешь сделать сейчас?"
-    )
-
-
-@router.message(F.text == "✍️ Письмо без отправки")
-async def unsent_letter_exercise(message: Message):
-    await message.answer(
-        "Письмо без отправки\n\n"
-        "Это способ выпустить эмоции безопасно.\n\n"
-        "Напиши письмо человеку или ситуации, не отправляя его.\n\n"
-        "Начни так:\n"
-        "«Я злюсь, потому что…»\n"
-        "«Мне больно, потому что…»\n"
-        "«Я хотел/хотела бы, чтобы…»\n"
-        "«Сейчас мне важно…»\n\n"
-        "После письма сделай паузу 10 минут."
-    )
-
-
-@router.message(F.text == "🎯 Зона контроля")
-async def control_zone_exercise(message: Message):
-    await message.answer(
-        "Упражнение «Зона контроля»\n\n"
-        "Раздели ситуацию на 3 части:\n\n"
-        "1. Что я не контролирую?\n"
-        "2. На что я могу повлиять?\n"
-        "3. Какой один маленький шаг я могу сделать сегодня?\n\n"
-        "Это помогает снизить накручивание и вернуть ощущение опоры."
-    )
-
-
-@router.message(F.text == "💛 Самосострадание")
-async def self_compassion_exercise(message: Message):
-    await message.answer(
-        "Упражнение «Самосострадание»\n\n"
-        "Положи руку на грудь или живот.\n\n"
-        "Скажи себе:\n\n"
-        "«Мне сейчас трудно».\n"
-        "«Я не обязан/обязана справляться идеально».\n"
-        "«Я могу быть к себе мягче хотя бы на 1%».\n\n"
-        "Сделай 3 медленных выдоха."
     )
