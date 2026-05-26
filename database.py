@@ -1,4 +1,4 @@
-import sqlite3
+﻿import sqlite3
 from datetime import datetime
 from pathlib import Path
 from typing import Any, Optional
@@ -239,6 +239,18 @@ def init_db() -> None:
         ON trigger_entries(user_id)
         """
     )
+
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS onboarding (
+            user_id INTEGER PRIMARY KEY,
+            focus_area TEXT,
+            created_at TEXT NOT NULL DEFAULT (datetime('now')),
+            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+        """
+    )
+
 
     conn.commit()
     conn.close()
