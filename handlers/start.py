@@ -46,7 +46,7 @@ async def cmd_start(message: Message):
 
 
 @router.message(F.text == CONSENT_ACCEPT_BUTTON)
-async def accept_consent(message: Message):
+async def accept_consent(message: Message, state: FSMContext):
     user = message.from_user
 
     if user is None:
@@ -74,11 +74,11 @@ async def onboarding_focus(message: Message, state: FSMContext):
 
     save_onboarding(user.id, message.text)
     await state.clear()
-    await state.set_state(OnboardingStates.focus)
     await message.answer(
-        FOCUS_QUESTION_TEXT,
-        reply_markup=focus_menu,
+        "Спасибо! Теперь я буду учитывать это в наших разговорах.\n\nТы в главном меню.",
+        reply_markup=main_menu,
     )
+    await message.delete()
 
 
 @router.message(F.text == CONSENT_DECLINE_BUTTON)
@@ -87,3 +87,5 @@ async def decline_consent(message: Message):
         UNDER_18_TEXT,
         reply_markup=ReplyKeyboardRemove(),
     )
+
+
