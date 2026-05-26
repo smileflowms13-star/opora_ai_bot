@@ -1677,6 +1677,21 @@ def get_user_message_count(telegram_id: int) -> int:
     finally:
         conn.close()
 
+
+def save_onboarding(user_id: int, focus_area: str) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        INSERT OR REPLACE INTO onboarding (user_id, focus_area, created_at)
+        VALUES (?, ?, datetime('now'))
+        """,
+        (user_id, focus_area),
+    )
+    conn.commit()
+    conn.close()
+
+
 def add_user(telegram_id: int, username=None, first_name=None) -> int:
     """
     Создаёт пользователя, если его нет, или обновляет username/first_name.
