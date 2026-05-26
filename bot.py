@@ -7,6 +7,7 @@ from aiogram.fsm.storage.memory import MemoryStorage
 from config import BOT_TOKEN
 from database import init_db
 from handlers import diary, fallback, info, map, sections, settings, sos, start, trigger
+from handlers.exercises import router as exercises_router
 from logger_config import setup_logging
 from middlewares import ConsentMiddleware
 from scheduler import setup_scheduler
@@ -69,5 +70,6 @@ if __name__ == "__main__":
         raise
     else:
         logger.info("Opora AI bot stopped")
+
 
 
