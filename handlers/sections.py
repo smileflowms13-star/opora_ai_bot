@@ -1,8 +1,7 @@
 from aiogram import Router, F
-from aiogram.filters import Command
 from aiogram.types import Message
 
-from keyboards import relationships_menu, exercises_menu, settings_menu
+from keyboards import relationships_menu, exercises_menu
 
 
 router = Router()
@@ -124,20 +123,6 @@ async def help_write_message_button(message: Message):
     )
 
 
-@router.message(Command("diary"))
-@router.message(F.text == "📝 Дневник")
-async def diary_button(message: Message):
-    await message.answer(
-        "Дневник помогает увидеть повторяющиеся состояния и триггеры.\n\n"
-        "Ответь одним сообщением:\n\n"
-        "1. Настроение от 1 до 10:\n"
-        "2. Тревога от 1 до 10:\n"
-        "3. Энергия от 1 до 10:\n"
-        "4. Как спал/спала: плохо / нормально / хорошо\n"
-        "5. Что сегодня сильнее всего повлияло на состояние?"
-    )
-
-
 @router.message(F.text == "🌿 Упражнения")
 async def exercises_button(message: Message):
     await message.answer(
@@ -224,15 +209,4 @@ async def self_compassion_exercise(message: Message):
         "«Я не обязан/обязана справляться идеально».\n"
         "«Я могу быть к себе мягче хотя бы на 1%».\n\n"
         "Сделай 3 медленных выдоха."
-    )
-
-
-
-
-
-@router.message(F.text == "⚙️ Настройки")
-async def settings_button(message: Message):
-    await message.answer(
-        "Настройки:",
-        reply_markup=settings_menu
     )

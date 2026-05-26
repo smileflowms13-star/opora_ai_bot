@@ -1,6 +1,7 @@
 ﻿import logging
 
 from aiogram import Router
+from aiogram.filters import StateFilter
 from aiogram.enums import ChatAction
 from aiogram.types import Message
 
@@ -33,7 +34,7 @@ TOO_LONG_MESSAGE_TEXT = (
 )
 
 
-@router.message()
+@router.message(StateFilter(None))
 async def fallback_message(message: Message):
     user = message.from_user
 

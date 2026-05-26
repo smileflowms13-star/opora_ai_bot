@@ -1,5 +1,5 @@
 from aiogram import F, Router
-from aiogram.filters import Command
+from aiogram.filters import Command, StateFilter
 from aiogram.types import Message, ReplyKeyboardRemove
 
 from database import delete_user_data, reset_user_consent
@@ -123,7 +123,7 @@ async def confirm_withdraw_consent(message: Message):
     )
 
 
-@router.message(F.text == SETTINGS_CANCEL_BUTTON)
+@router.message(StateFilter(None), F.text == SETTINGS_CANCEL_BUTTON)
 async def cancel_settings_action(message: Message):
     await message.answer(
         SETTINGS_TEXT,

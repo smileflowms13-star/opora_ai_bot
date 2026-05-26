@@ -1,4 +1,4 @@
-from aiogram import Router, F
+from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message
 
@@ -12,17 +12,6 @@ router = Router()
 @router.message(Command("help"))
 async def help_command(message: Message):
     await message.answer(HELP_TEXT)
-
-
-@router.message(F.text == "🔔 Напоминания")
-async def reminders_button(message: Message):
-    await message.answer(
-        "Напоминания появятся позже.\n\n"
-        "Мы добавим возможность включить мягкий ежедневный чек-ин:\n"
-        "— утром;\n"
-        "— вечером;\n"
-        "— в удобное время."
-    )
 
 
 @router.message(Command("stats"))

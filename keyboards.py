@@ -104,33 +104,9 @@ exercises_menu = ReplyKeyboardMarkup(
 )
 
 
-settings_menu = ReplyKeyboardMarkup(
-    keyboard=[
-        [
-            KeyboardButton(text="📄 Правила и безопасность"),
-            KeyboardButton(text="🔐 Конфиденциальность"),
-        ],
-        [
-            KeyboardButton(text="🗑 Удалить мои данные"),
-            KeyboardButton(text="🔔 Напоминания"),
-        ],
-        [
-            KeyboardButton(text="⬅️ Главное меню"),
-        ],
-    ],
-    resize_keyboard=True
-)
 from texts import CONSENT_ACCEPT_BUTTON, CONSENT_DECLINE_BUTTON
 
 
-onboarding_menu = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text=CONSENT_ACCEPT_BUTTON)],
-        [KeyboardButton(text=CONSENT_DECLINE_BUTTON)],
-    ],
-    resize_keyboard=True,
-    one_time_keyboard=True,
-)
 onboarding_menu = ReplyKeyboardMarkup(
     keyboard=[
         [KeyboardButton(text=CONSENT_ACCEPT_BUTTON)],

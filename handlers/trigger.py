@@ -28,8 +28,8 @@ cancel_menu = ReplyKeyboardMarkup(
 )
 
 
-@router.message(StateFilter("*"), Command("cancel"))
-@router.message(StateFilter("*"), F.text == "❌ Отмена")
+@router.message(StateFilter(TriggerStates.situation, TriggerStates.thought, TriggerStates.emotion, TriggerStates.body_reaction, TriggerStates.impulse, TriggerStates.need), Command("cancel"))
+@router.message(StateFilter(TriggerStates.situation, TriggerStates.thought, TriggerStates.emotion, TriggerStates.body_reaction, TriggerStates.impulse, TriggerStates.need), F.text == "❌ Отмена")
 async def cancel_trigger(message: Message, state: FSMContext):
     await state.clear()
     await message.answer(

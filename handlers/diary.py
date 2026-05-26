@@ -54,8 +54,8 @@ def parse_score(text: str) -> int | None:
     return None
 
 
-@router.message(StateFilter("*"), Command("cancel"))
-@router.message(StateFilter("*"), F.text == "❌ Отмена")
+@router.message(StateFilter(DiaryStates.mood, DiaryStates.anxiety, DiaryStates.energy, DiaryStates.sleep, DiaryStates.note), Command("cancel"))
+@router.message(StateFilter(DiaryStates.mood, DiaryStates.anxiety, DiaryStates.energy, DiaryStates.sleep, DiaryStates.note), F.text == "❌ Отмена")
 async def cancel_diary(message: Message, state: FSMContext):
     await state.clear()
     await message.answer(
