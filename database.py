@@ -108,7 +108,7 @@ def init_db() -> None:
         """
     )
 
-    # РњСЏРіРєРёРµ РјРёРіСЂР°С†РёРё РґР»СЏ СЃС‚Р°СЂС‹С… РІРµСЂСЃРёР№ С‚Р°Р±Р»РёС†
+    # Мягкие миграции для старых версий таблиц
     user_columns = _get_table_columns(cursor, "users")
 
     if "username" not in user_columns:
@@ -221,8 +221,6 @@ def init_db() -> None:
             """
         )
     except sqlite3.IntegrityError:
-        # Р•СЃР»Рё РІ СЃС‚Р°СЂРѕР№ Р±Р°Р·Рµ РµСЃС‚СЊ РґСѓР±Р»Рё telegram_id, РёРЅРґРµРєСЃ РјРѕР¶РµС‚ РЅРµ СЃРѕР·РґР°С‚СЊСЃСЏ.
-        # Р”Р»СЏ MVP СЌС‚Рѕ РЅРµ РєСЂРёС‚РёС‡РЅРѕ.
         pass
 
     cursor.execute(
@@ -256,7 +254,6 @@ def init_db() -> None:
         )
         """
     )
-
 
     conn.commit()
     conn.close()
@@ -508,21 +505,6 @@ def save_message(
     is_high_risk: bool = False,
     **kwargs: Any,
 ) -> int:
-    """
-    Save a message to messages and return inserted row id.
-
-    Compatibility:
-    - New calls: save_message(user_id=..., ...)
-    - Old fallback.py calls: save_message(telegram_id, role, content)
-    - save_message(telegram_id=..., ...)
-    - save_message(text=...) / save_message(message=...)
-
-    Important:
-    - messages.user_id stores internal users.id.
-    - If Telegram ID is provided, resolve users.id via add_user().
-    - High-risk user messages are not saved into AI history,
-      preserving the safe behavior of the previous active function.
-    """
     if content is None:
         content = text
 
@@ -547,8 +529,6 @@ def save_message(
     if role == "bot":
         role = "assistant"
 
-    # Preserve safe behavior from the previous active function:
-    # high-risk user messages are not written into AI history.
     detected_high_risk = bool(is_high_risk)
 
     if role == "user" and not detected_high_risk:
@@ -592,9 +572,6 @@ def save_message(
         if original_user_id_int is None:
             raise ValueError("save_message: user_id must be an integer")
 
-        # user_id can be:
-        # 1) real internal users.id;
-        # 2) Telegram ID from the old positional fallback.py call.
         conn_lookup = get_connection()
         cursor_lookup = conn_lookup.cursor()
 
@@ -617,8 +594,6 @@ def save_message(
         finally:
             conn_lookup.close()
 
-        # If the value looks like Telegram ID or is already found as telegram_id,
-        # treat it as Telegram ID. This keeps compatibility with fallback.py.
         if row_by_telegram_id is not None and (
             row_by_internal_id is None or _looks_like_telegram_id(original_user_id_int)
         ):
@@ -630,8 +605,6 @@ def save_message(
             resolved_telegram_id = _as_int(row_by_internal_id[0])
 
         else:
-            # If no internal user exists with this id, treat it as Telegram ID
-            # for the old positional API and create a users row.
             resolved_telegram_id = original_user_id_int
             internal_user_id = add_user(resolved_telegram_id)
 
@@ -749,19 +722,6 @@ def get_recent_messages(
     telegram_id: Optional[int] = None,
     exclude_high_risk: bool = True,
 ) -> list[dict[str, str]]:
-    """
-    Return recent messages for AI context.
-
-    Compatibility:
-    - get_recent_messages(telegram_id) for fallback.py;
-    - get_recent_messages(user_id=...);
-    - get_recent_messages(telegram_id=...).
-
-    Handles:
-    - new schema: messages.user_id = internal users.id;
-    - old/mixed schema: messages.user_id may equal Telegram ID;
-    - messages.telegram_id, if present.
-    """
     def _as_int(value: Any) -> Optional[int]:
         try:
             if value is None:
@@ -809,7 +769,6 @@ def get_recent_messages(
         if telegram_id_int is not None:
             candidate_telegram_ids.add(telegram_id_int)
 
-            # Old data may store Telegram ID directly in messages.user_id.
             candidate_user_ids.add(telegram_id_int)
 
             if {"id", "telegram_id"}.issubset(user_columns):
@@ -822,7 +781,6 @@ def get_recent_messages(
                     candidate_user_ids.add(int(row[0]))
 
         if user_id_int is not None:
-            # user_id can be internal id or Telegram ID from the old positional API.
             candidate_user_ids.add(user_id_int)
 
             if {"id", "telegram_id"}.issubset(user_columns):
@@ -1362,11 +1320,6 @@ def get_trigger_stats(user_id: int) -> dict[str, Any]:
 
 
 def delete_user_data(telegram_id: int) -> int:
-    """
-    РЈРґР°Р»СЏРµС‚ РґР°РЅРЅС‹Рµ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ РёР· РѕСЃРЅРѕРІРЅС‹С… С‚Р°Р±Р»РёС† РїСЂРѕРµРєС‚Р°.
-    Р’РѕР·РІСЂР°С‰Р°РµС‚ РїСЂРёРјРµСЂРЅРѕРµ РєРѕР»РёС‡РµСЃС‚РІРѕ СѓРґР°Р»С‘РЅРЅС‹С… СЃС‚СЂРѕРє.
-    """
-
     conn = get_connection()
     cursor = conn.cursor()
 
@@ -1434,16 +1387,10 @@ def delete_user_data(telegram_id: int) -> int:
     return deleted_rows
 
 
-# РРЅРёС†РёР°Р»РёР·РёСЂСѓРµРј Р±Р°Р·Сѓ РїСЂРё РёРјРїРѕСЂС‚Рµ РјРѕРґСѓР»СЏ.
 init_db()
-def get_trigger_count(telegram_id: int) -> int:
-    """
-    Р’РѕР·РІСЂР°С‰Р°РµС‚ РєРѕР»РёС‡РµСЃС‚РІРѕ Р·Р°РїРёСЃРµР№ СЂР°Р·Р±РѕСЂР° С‚СЂРёРіРіРµСЂРѕРІ РїРѕР»СЊР·РѕРІР°С‚РµР»СЏ.
 
-    РЎРѕРІРјРµСЃС‚РёРјР°СЏ С„СѓРЅРєС†РёСЏ РґР»СЏ СЃС‚Р°СЂРѕРіРѕ handlers/trigger.py,
-    РєРѕС‚РѕСЂС‹Р№ РёРјРїРѕСЂС‚РёСЂСѓРµС‚ get_trigger_count.
-    Р Р°Р±РѕС‚Р°РµС‚ Рё СЃРѕ СЃС…РµРјРѕР№ С‡РµСЂРµР· telegram_id, Рё СЃРѕ СЃС…РµРјРѕР№ С‡РµСЂРµР· user_id.
-    """
+
+def get_trigger_count(telegram_id: int) -> int:
     import sqlite3
 
     db_path = (
@@ -1470,7 +1417,6 @@ def get_trigger_count(telegram_id: int) -> int:
             params.append(telegram_id)
 
         if "user_id" in trigger_columns:
-            # Р’ РЅРѕРІС‹С… РІРµСЂСЃРёСЏС… user_id РјРѕР¶РµС‚ Р±С‹С‚СЊ РІРЅСѓС‚СЂРµРЅРЅРёРј id РёР· С‚Р°Р±Р»РёС†С‹ users
             user_row = cursor.execute(
                 "SELECT id FROM users WHERE telegram_id = ?",
                 (telegram_id,),
@@ -1481,7 +1427,6 @@ def get_trigger_count(telegram_id: int) -> int:
                 conditions.append("user_id = ?")
                 params.append(internal_user_id)
 
-            # РќР° СЃР»СѓС‡Р°Р№ СЃС‚Р°СЂС‹С…/СЃРјРµС€Р°РЅРЅС‹С… Р·Р°РїРёСЃРµР№, РіРґРµ РІ user_id РјРѕРі РїРѕРїР°СЃС‚СЊ telegram_id
             conditions.append("user_id = ?")
             params.append(telegram_id)
 
@@ -1500,16 +1445,8 @@ def get_trigger_count(telegram_id: int) -> int:
     finally:
         conn.close()
 
-def get_sleep_stats(telegram_id: int, limit: int = 30) -> dict:
-    """
-    Возвращает мягкую статистику сна по дневнику пользователя.
 
-    Совместимая функция для map_builder.py.
-    Работает со старыми/смешанными схемами:
-    - если в diary_entries есть telegram_id;
-    - если в diary_entries есть user_id;
-    - если user_id связан с users.id.
-    """
+def get_sleep_stats(telegram_id: int, limit: int = 30) -> dict:
     import sqlite3
 
     db_path = (
@@ -1555,7 +1492,6 @@ def get_sleep_stats(telegram_id: int, limit: int = 30) -> dict:
                 conditions.append("user_id = ?")
                 params.append(internal_user_id)
 
-            # На случай старой/смешанной схемы, где user_id мог быть равен telegram_id
             conditions.append("user_id = ?")
             params.append(telegram_id)
 
@@ -1617,16 +1553,8 @@ def get_sleep_stats(telegram_id: int, limit: int = 30) -> dict:
     finally:
         conn.close()
 
-def get_user_message_count(telegram_id: int) -> int:
-    """
-    Возвращает количество сообщений пользователя в таблице messages.
 
-    Совместимая функция для handlers/info.py.
-    Работает со схемами:
-    - messages.telegram_id;
-    - messages.user_id, где user_id = users.id;
-    - messages.user_id, где user_id мог быть равен telegram_id.
-    """
+def get_user_message_count(telegram_id: int) -> int:
     import sqlite3
 
     db_path = (
@@ -1663,7 +1591,6 @@ def get_user_message_count(telegram_id: int) -> int:
                 conditions.append("user_id = ?")
                 params.append(internal_user_id)
 
-            # На случай старой/смешанной схемы, где user_id мог быть равен telegram_id
             conditions.append("user_id = ?")
             params.append(telegram_id)
 
@@ -1698,7 +1625,6 @@ def save_onboarding(user_id: int, focus_area: str) -> None:
     conn.close()
 
 
-
 def get_user_focus(telegram_id: int) -> Optional[str]:
     conn = get_connection()
     cursor = conn.cursor()
@@ -1716,7 +1642,6 @@ def get_user_focus(telegram_id: int) -> Optional[str]:
         return row[0] if row else None
     finally:
         conn.close()
-
 
 
 def set_daily_reminder(telegram_id: int, enabled: bool, reminder_time: Optional[str] = None) -> None:
@@ -1746,6 +1671,7 @@ def set_daily_reminder(telegram_id: int, enabled: bool, reminder_time: Optional[
     conn.commit()
     conn.close()
 
+
 def get_daily_reminder_settings(telegram_id: int) -> dict:
     conn = get_connection()
     cursor = conn.cursor()
@@ -1768,12 +1694,6 @@ def get_daily_reminder_settings(telegram_id: int) -> dict:
 
 
 def add_user(telegram_id: int, username=None, first_name=None) -> int:
-    """
-    Создаёт пользователя, если его нет, или обновляет username/first_name.
-    Возвращает внутренний id из таблицы users.
-
-    Совместимая функция для старых обработчиков, включая fallback.py.
-    """
     import sqlite3
     from datetime import datetime
 
@@ -1875,3 +1795,24 @@ def add_user(telegram_id: int, username=None, first_name=None) -> int:
 
     finally:
         conn.close()
+
+
+def disable_reminder(telegram_id: int) -> None:
+    """
+    Отключает ежедневное напоминание пользователя.
+    Сбрасывает флаг и время.
+    """
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        """
+        UPDATE users
+        SET daily_reminder_enabled = 0,
+            daily_reminder_time = NULL,
+            updated_at = datetime('now')
+        WHERE telegram_id = ?
+        """,
+        (telegram_id,)
+    )
+    conn.commit()
+    conn.close()

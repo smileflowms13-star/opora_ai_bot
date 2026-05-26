@@ -18,6 +18,7 @@ from texts import (
     DAILY_REMINDER_BUTTON,
     BREATHING_BUTTON,
     GROUNDING_BUTTON,
+    REMINDER_DISABLE_BUTTON,          # <-- новый импорт
 )
 
 focus_menu = ReplyKeyboardMarkup(
@@ -102,7 +103,7 @@ exercises_menu = ReplyKeyboardMarkup(
     keyboard=[
         [
             KeyboardButton(text="🌬 Дыхание 4–6"),
-            KeyboardButton(text=GROUNDING_BUTTON),   # <-- исправлено: теперь используется константа
+            KeyboardButton(text=GROUNDING_BUTTON),
         ],
         [
             KeyboardButton(text="🛑 STOP"),
@@ -139,6 +140,7 @@ settings_menu = ReplyKeyboardMarkup(
         [KeyboardButton(text=SETTINGS_WITHDRAW_CONSENT_BUTTON)],
         [KeyboardButton(text=SETTINGS_DELETE_DATA_BUTTON)],
         [KeyboardButton(text=DAILY_REMINDER_BUTTON)],
+        [KeyboardButton(text=REMINDER_DISABLE_BUTTON)],   # <-- новая кнопка
         [KeyboardButton(text=SETTINGS_BACK_BUTTON)],
     ],
     resize_keyboard=True,

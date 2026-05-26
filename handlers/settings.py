@@ -4,7 +4,7 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.filters import Command, StateFilter
 from aiogram.types import Message, ReplyKeyboardRemove
 
-from database import delete_user_data, reset_user_consent, set_daily_reminder, get_daily_reminder_settings
+from database import delete_user_data, reset_user_consent, set_daily_reminder, get_daily_reminder_settings, disable_reminder
 from keyboards import (
     main_menu,
     settings_menu,
@@ -18,6 +18,9 @@ from texts import (
     DAILY_REMINDER_OFF_TEXT,
     DAILY_REMINDER_TIME_PROMPT,
     DAILY_REMINDER_SET_TEXT,
+    REMINDER_DISABLE_BUTTON,
+    REMINDER_DISABLED_TEXT,
+    REMINDER_ALREADY_DISABLED_TEXT,
     SETTINGS_BUTTON,
     SETTINGS_TEXT,
     SETTINGS_RULES_BUTTON,
@@ -43,11 +46,10 @@ class ReminderStates(StatesGroup):
 router = Router()
 
 
-
 @router.message(Command("menu"))
 async def show_main_menu_command(message: Message):
     await message.answer(
-        "\u0412\u044b\u0431\u0435\u0440\u0438\u0442\u0435, \u0441 \u0447\u0435\u0433\u043e \u043d\u0430\u0447\u043d\u0451\u043c:",
+        "Выберите, с чего начнём:",
         reply_markup=main_menu,
     )
 
@@ -143,12 +145,13 @@ async def cancel_settings_action(message: Message):
 
 
 @router.message(F.text == SETTINGS_BACK_BUTTON)
-@router.message(F.text.contains("\u0413\u043b\u0430\u0432\u043d\u043e\u0435 \u043c\u0435\u043d\u044e"))
+@router.message(F.text.contains("Главное меню"))
 async def back_to_main_menu(message: Message):
     await message.answer(
         "Выберите, с чего начнём:",
         reply_markup=main_menu,
     )
+
 
 @router.message(F.text == DAILY_REMINDER_BUTTON)
 async def daily_reminder_button(message: Message, state: FSMContext):
@@ -163,13 +166,13 @@ async def daily_reminder_button(message: Message, state: FSMContext):
     await message.answer(msg + "\n\n" + DAILY_REMINDER_TIME_PROMPT)
     await state.set_state(ReminderStates.waiting_for_time)
 
+
 @router.message(StateFilter(ReminderStates.waiting_for_time))
 async def process_reminder_time(message: Message, state: FSMContext):
     user = message.from_user
     if user is None:
         return
     time_text = message.text.strip()
-    # Простая валидация формата ЧЧ:ММ
     import re
     if not re.match(r'^\d{2}:\d{2}$', time_text):
         await message.answer("Пожалуйста, введи время в формате ЧЧ:ММ (например, 21:00). Попробуй ещё раз:")
@@ -178,3 +181,15 @@ async def process_reminder_time(message: Message, state: FSMContext):
     await message.answer(DAILY_REMINDER_SET_TEXT.format(time_text))
     await state.clear()
 
+
+@router.message(F.text == REMINDER_DISABLE_BUTTON)
+async def disable_reminder_handler(message: Message):
+    user = message.from_user
+    if user is None:
+        return
+    settings = get_daily_reminder_settings(user.id)
+    if not settings['enabled']:
+        await message.answer(REMINDER_ALREADY_DISABLED_TEXT, reply_markup=settings_menu)
+        return
+    disable_reminder(user.id)
+    await message.answer(REMINDER_DISABLED_TEXT, reply_markup=settings_menu)
