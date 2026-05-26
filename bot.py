@@ -9,6 +9,7 @@ from database import init_db
 from handlers import diary, fallback, info, map, sections, settings, sos, start, trigger
 from logger_config import setup_logging
 from middlewares import ConsentMiddleware
+from scheduler import setup_scheduler
 
 
 logger = logging.getLogger(__name__)
@@ -23,6 +24,8 @@ async def main():
     logger.info("Database is ready")
 
     bot = Bot(token=BOT_TOKEN)
+
+    setup_scheduler(bot)
 
     dp = Dispatcher(storage=MemoryStorage())
     dp.message.middleware(ConsentMiddleware())
