@@ -1,5 +1,6 @@
 ﻿
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButtonfrom aiogram.types import ReplyKeyboardMarkup, KeyboardButton
+from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
+from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
 from texts import CONSENT_ACCEPT_BUTTON, CONSENT_DECLINE_BUTTON
 from texts import (
     SETTINGS_RULES_BUTTON,
