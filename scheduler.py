@@ -41,9 +41,10 @@ async def send_daily_reminders(bot: Bot):
         conn.close()
 
 def setup_scheduler(bot: Bot):
+    loop = asyncio.get_running_loop()
     scheduler = AsyncIOScheduler()
     scheduler.add_job(
-        lambda: asyncio.create_task(send_daily_reminders(bot)),
+        lambda: asyncio.run_coroutine_threadsafe(send_daily_reminders(bot), loop),
         'cron',
         minute='*',
         id='daily_reminder',
@@ -52,3 +53,5 @@ def setup_scheduler(bot: Bot):
     scheduler.start()
     logger.info("Scheduler started")
     return scheduler
+
+
