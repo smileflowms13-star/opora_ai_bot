@@ -111,18 +111,7 @@ async def exercises_button(message: Message):
         reply_markup=exercises_menu
     )
 
-# Временные статические упражнения (позже будут заменены на интерактивные FSM)
-@router.message(F.text == "🛑 STOP")
-async def stop_exercise(message: Message):
-    await message.answer(
-        "Техника STOP\n\n"
-        "S — Stop: остановись.\n"
-        "T — Take a breath: сделай медленный вдох и выдох.\n"
-        "O — Observe: заметь, что происходит в теле, мыслях и эмоциях.\n"
-        "P — Proceed: выбери следующий маленький шаг.\n\n"
-        "Вопрос: какой самый бережный следующий шаг ты можешь сделать сейчас?"
-    )
-
+# Статические заглушки для упражнений, которые еще не стали интерактивными
 @router.message(F.text == "🎯 Зона контроля")
 async def control_zone_exercise(message: Message):
     await message.answer(

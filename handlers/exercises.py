@@ -11,10 +11,13 @@ from texts import (
     BREATHING_BUTTON,
     GROUNDING_BUTTON, GROUNDING_INTRO, GROUNDING_STEP_SEE,
     GROUNDING_STEP_TOUCH, GROUNDING_STEP_HEAR, GROUNDING_STEP_SMELL,
-    GROUNDING_STEP_TASTE, GROUNDING_FINISH
+    GROUNDING_STEP_TASTE, GROUNDING_FINISH,
+    STOP_BUTTON, STOP_INTRO, STOP_STEP_STOP, STOP_STEP_BREATHE,
+    STOP_STEP_OBSERVE, STOP_STEP_PROCEED, STOP_FINISH
 )
 from keyboards import breathing_continue_keyboard, breathing_finish_keyboard, main_menu
 from keyboards import grounding_continue_keyboard, grounding_finish_keyboard
+from keyboards import stop_continue_keyboard, stop_finish_keyboard
 
 exercises_router = Router()
 
@@ -33,6 +36,14 @@ class GroundingSteps(StatesGroup):
     hear = State()
     smell = State()
     taste = State()
+    finish = State()
+
+class StopSteps(StatesGroup):
+    intro = State()
+    stop = State()
+    breathe = State()
+    observe = State()
+    proceed = State()
     finish = State()
 
 # ===== Дыхание по квадрату =====
@@ -131,7 +142,6 @@ async def grounding_finish_exit(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer("Вы завершили упражнение. Главное меню:", reply_markup=main_menu)
     await callback.answer()
 
-# Универсальный выход для всех промежуточных состояний
 @exercises_router.callback_query(StateFilter(GroundingSteps), F.data == "grounding_exit")
 async def exit_grounding(callback: CallbackQuery, state: FSMContext):
     await state.clear()
@@ -139,8 +149,64 @@ async def exit_grounding(callback: CallbackQuery, state: FSMContext):
     await callback.message.answer("Главное меню", reply_markup=main_menu)
     await callback.answer()
 
-# Обработчик /cancel для состояний заземления
 @exercises_router.message(StateFilter(GroundingSteps), Command("cancel"))
 async def cancel_grounding(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer("Упражнение отменено. Главное меню:", reply_markup=main_menu)
+
+# ===== Упражнение STOP =====
+@exercises_router.message(F.text == STOP_BUTTON)
+async def start_stop(message: Message, state: FSMContext):
+    await state.clear()
+    logging.info(f"User {message.from_user.id} started STOP exercise")
+    await state.set_state(StopSteps.intro)
+    await message.answer(STOP_INTRO, reply_markup=stop_continue_keyboard(), parse_mode="HTML")
+
+@exercises_router.callback_query(StateFilter(StopSteps.intro), F.data == "stop_next")
+async def stop_step_stop(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(StopSteps.stop)
+    await callback.message.edit_text(STOP_STEP_STOP, reply_markup=stop_continue_keyboard(), parse_mode="HTML")
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(StopSteps.stop), F.data == "stop_next")
+async def stop_step_breathe(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(StopSteps.breathe)
+    await callback.message.edit_text(STOP_STEP_BREATHE, reply_markup=stop_continue_keyboard(), parse_mode="HTML")
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(StopSteps.breathe), F.data == "stop_next")
+async def stop_step_observe(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(StopSteps.observe)
+    await callback.message.edit_text(STOP_STEP_OBSERVE, reply_markup=stop_continue_keyboard(), parse_mode="HTML")
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(StopSteps.observe), F.data == "stop_next")
+async def stop_step_proceed(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(StopSteps.proceed)
+    await callback.message.edit_text(STOP_STEP_PROCEED, reply_markup=stop_continue_keyboard(), parse_mode="HTML")
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(StopSteps.proceed), F.data == "stop_next")
+async def stop_step_finish(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(StopSteps.finish)
+    await callback.message.edit_text(STOP_FINISH, reply_markup=stop_finish_keyboard(), parse_mode="HTML")
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(StopSteps.finish), F.data == "stop_exit")
+async def stop_finish_exit(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await callback.message.edit_text(STOP_FINISH)
+    await callback.message.answer("Вы завершили упражнение. Главное меню:", reply_markup=main_menu)
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(StopSteps), F.data == "stop_exit")
+async def exit_stop(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await callback.message.edit_text("Упражнение прервано. Возвращаемся в главное меню.")
+    await callback.message.answer("Главное меню", reply_markup=main_menu)
+    await callback.answer()
+
+@exercises_router.message(StateFilter(StopSteps), Command("cancel"))
+async def cancel_stop(message: Message, state: FSMContext):
     await state.clear()
     await message.answer("Упражнение отменено. Главное меню:", reply_markup=main_menu)

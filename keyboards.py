@@ -18,7 +18,8 @@ from texts import (
     DAILY_REMINDER_BUTTON,
     BREATHING_BUTTON,
     GROUNDING_BUTTON,
-    REMINDER_DISABLE_BUTTON,          # <-- новый импорт
+    REMINDER_DISABLE_BUTTON,
+    STOP_BUTTON,                     # новый импорт
 )
 
 focus_menu = ReplyKeyboardMarkup(
@@ -106,7 +107,7 @@ exercises_menu = ReplyKeyboardMarkup(
             KeyboardButton(text=GROUNDING_BUTTON),
         ],
         [
-            KeyboardButton(text="🛑 STOP"),
+            KeyboardButton(text=STOP_BUTTON),                # теперь использует константу
             KeyboardButton(text="✍️ Письмо без отправки"),
         ],
         [
@@ -140,7 +141,7 @@ settings_menu = ReplyKeyboardMarkup(
         [KeyboardButton(text=SETTINGS_WITHDRAW_CONSENT_BUTTON)],
         [KeyboardButton(text=SETTINGS_DELETE_DATA_BUTTON)],
         [KeyboardButton(text=DAILY_REMINDER_BUTTON)],
-        [KeyboardButton(text=REMINDER_DISABLE_BUTTON)],   # <-- новая кнопка
+        [KeyboardButton(text=REMINDER_DISABLE_BUTTON)],
         [KeyboardButton(text=SETTINGS_BACK_BUTTON)],
     ],
     resize_keyboard=True,
@@ -187,4 +188,16 @@ def grounding_continue_keyboard():
 def grounding_finish_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏠 В главное меню", callback_data="grounding_exit")],
+    ])
+
+# Инлайн-клавиатуры для упражнения STOP
+def stop_continue_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="▶️ Продолжить", callback_data="stop_next")],
+        [InlineKeyboardButton(text="🚪 Выйти", callback_data="stop_exit")],
+    ])
+
+def stop_finish_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🏠 В главное меню", callback_data="stop_exit")],
     ])
