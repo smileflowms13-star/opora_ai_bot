@@ -3,21 +3,19 @@
 from aiogram import Router
 from aiogram.filters import StateFilter
 from aiogram.enums import ChatAction
-from aiogram.types import Message
+from aiogram.types import Message, InlineKeyboardMarkup, InlineKeyboardButton
 
 from ai_client import generate_ai_reply
 from database import add_user, save_message, get_recent_messages, get_user_focus, get_crisis_plan
 from safety import is_high_risk, sanitize_user_input
 from texts import CRISIS_TEXT
-
+from analytics import get_quick_exercise_suggestions
 
 logger = logging.getLogger(__name__)
 
 router = Router()
 
-
 MAX_USER_TEXT_LENGTH = 3000
-
 
 AI_TEMPORARY_ERROR_TEXT = (
     "Похоже, сейчас не получилось получить ответ от AI-сервиса.\n\n"
@@ -26,13 +24,11 @@ AI_TEMPORARY_ERROR_TEXT = (
     "и сделать короткое упражнение для стабилизации."
 )
 
-
 TOO_LONG_MESSAGE_TEXT = (
     "Сообщение получилось очень длинным.\n\n"
     "Я смогу лучше помочь, если ты сократишь его до нескольких абзацев: "
     "что случилось, что ты чувствуешь и какая помощь сейчас нужна."
 )
-
 
 @router.message(StateFilter(None))
 async def fallback_message(message: Message):
@@ -59,11 +55,23 @@ async def fallback_message(message: Message):
     # Safety first.
     if is_high_risk(user_text):
         await message.answer(CRISIS_TEXT)
-        # Показываем кризисный план, если он есть
         if user:
             plan = get_crisis_plan(user.id)
             if plan:
                 await message.answer(f"Твой кризисный план:\n\n{plan}")
+        return
+
+    # Быстрый подбор упражнений по ключевым словам
+    suggestions = get_quick_exercise_suggestions(user_text)
+    if suggestions:
+        keyboard_rows = []
+        for exercise in suggestions:
+            callback_data = f"quick_exercise_{exercise}"
+            keyboard_rows.append([InlineKeyboardButton(text=exercise, callback_data=callback_data)])
+        await message.answer(
+            "Похоже, тебе сейчас может помочь одно из этих упражнений. Выбери:",
+            reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard_rows)
+        )
         return
 
     # Команды не отправляем в AI.
@@ -74,14 +82,11 @@ async def fallback_message(message: Message):
         )
         return
 
-    # Слишком длинные сообщения не сохраняем и не отправляем в AI.
     if len(user_text) > MAX_USER_TEXT_LENGTH:
         await message.answer(TOO_LONG_MESSAGE_TEXT)
         return
 
-    # --- Защита от инъекций: очищаем ввод перед отправкой в AI ---
     user_text_clean = sanitize_user_input(user_text)
-    # -------------------------------------------------------------
 
     save_message(
         telegram_id=telegram_id,

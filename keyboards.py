@@ -27,6 +27,7 @@ from texts import (
     CHANGE_FOCUS_BUTTON,
     CRISIS_PLAN_BUTTON,
     FAST_MOOD_EMOJI_MAP,
+    GARDEN_BUTTON,
 )
 
 focus_menu = ReplyKeyboardMarkup(
@@ -57,6 +58,9 @@ main_menu = ReplyKeyboardMarkup(
         [
             KeyboardButton(text="📊 Моя карта"),
             KeyboardButton(text="⚙️ Настройки"),
+        ],
+        [
+            KeyboardButton(text=GARDEN_BUTTON),
         ],
     ],
     resize_keyboard=True
@@ -150,7 +154,7 @@ settings_menu = ReplyKeyboardMarkup(
         [KeyboardButton(text=DAILY_REMINDER_BUTTON)],
         [KeyboardButton(text=REMINDER_DISABLE_BUTTON)],
         [KeyboardButton(text=CHANGE_FOCUS_BUTTON)],
-        [KeyboardButton(text=CRISIS_PLAN_BUTTON)],   # новая кнопка
+        [KeyboardButton(text=CRISIS_PLAN_BUTTON)],
         [KeyboardButton(text=SETTINGS_BACK_BUTTON)],
     ],
     resize_keyboard=True,
