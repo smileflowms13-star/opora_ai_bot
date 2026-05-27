@@ -7,7 +7,7 @@ from aiogram.types import Message
 
 from ai_client import generate_ai_reply
 from database import add_user, save_message, get_recent_messages, get_user_focus
-from safety import is_high_risk
+from safety import is_high_risk, sanitize_user_input
 from texts import CRISIS_TEXT
 
 
@@ -57,15 +57,11 @@ async def fallback_message(message: Message):
         return
 
     # Safety first.
-    # Даже если middleware по какой-то причине не перехватил high-risk,
-    # fallback не должен отправлять такое сообщение в AI
-    # и не должен сохранять его в обычную AI-историю.
     if is_high_risk(user_text):
         await message.answer(CRISIS_TEXT)
         return
 
     # Команды не отправляем в AI.
-    # Например, если пользователь ошибся в команде: /triger вместо /trigger.
     if user_text.startswith("/"):
         await message.answer(
             "Я не нашёл такую команду.\n\n"
@@ -78,18 +74,18 @@ async def fallback_message(message: Message):
         await message.answer(TOO_LONG_MESSAGE_TEXT)
         return
 
-    # Сохраняем только обычное сообщение пользователя.
-    # ВАЖНО: не передаём risk_level, потому что текущая save_message()
-    # в database.py его не принимает.
+    # --- Защита от инъекций: очищаем ввод перед отправкой в AI ---
+    user_text_clean = sanitize_user_input(user_text)
+    # -------------------------------------------------------------
+
+    # Сохраняем уже очищенную версию
     save_message(
         telegram_id=telegram_id,
         role="user",
-        content=user_text,
+        content=user_text_clean,
     )
 
     try:
-        # Берём последние сообщения из базы.
-        # Они уже включают текущее сообщение пользователя.
         history = get_recent_messages(
             telegram_id=telegram_id,
             limit=12,
@@ -103,7 +99,7 @@ async def fallback_message(message: Message):
         user_focus = get_user_focus(telegram_id)
 
         ai_answer = await generate_ai_reply(
-            user_text=user_text,
+            user_text=user_text_clean,
             history=history,
             user_focus=user_focus,
         )

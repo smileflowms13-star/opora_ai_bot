@@ -259,3 +259,41 @@ def is_high_risk(text: str) -> bool:
     - handlers/fallback.py.
     """
     return classify_risk(text).is_high
+
+
+def sanitize_user_input(text: str) -> str:
+    """
+    Базовая защита от prompt-инъекций.
+    Удаляет опасные разделители, маркеры ролей, попытки смены инструкций.
+    Не используется для проверки high-risk — только перед отправкой в AI.
+    """
+    if not text:
+        return text
+
+    # Убираем последовательности, которые могут быть восприняты как разделители промпта
+    text = re.sub(r'[#*\-=_]{3,}', ' ', text)
+
+    # Убираем строки, начинающиеся с маркеров ролей (System, User, Assistant, Human, AI)
+    # Это предотвращает попытки выдать своё сообщение за системное
+    text = re.sub(r'(?im)^\s*(system|user|assistant|human|ai)\s*:\s*', ' ', text)
+
+    # Убираем явные фразы-инъекции (английские и русские)
+    injection_phrases = [
+        r'(ignore|forget|disregard|override)\s+(all\s+)?(previous|prior|earlier|above)\s+(instructions?|prompts?|commands?|messages?)',
+        r'(игнорируй|забудь|отмени|переопредели)\s+(все\s+)?(предыдущие|прошлые|ранние)\s+(инструкции|промпты|команды|сообщения)',
+        r'start\s+over\s+and\s+forget\s+everything',
+        r'начни\s+заново\s+и\s+забудь\s+вс[её]',
+        r'you\s+are\s+now\s+a\s+different\s+ai',
+        r'ты\s+теперь\s+другой\s+ai',
+    ]
+    for phrase in injection_phrases:
+        text = re.sub(phrase, '', text, flags=re.IGNORECASE | re.UNICODE)
+
+    # Убираем возможные попытки экранирования через markdown или HTML
+    text = text.replace('```', '')
+    text = re.sub(r'<[^>]+>', '', text)  # удаляем HTML-теги
+
+    # Схлопываем множественные пробелы
+    text = re.sub(r'\s+', ' ', text).strip()
+
+    return text
