@@ -138,7 +138,7 @@ async def grounding_step_finish(callback: CallbackQuery, state: FSMContext):
 @exercises_router.callback_query(StateFilter(GroundingSteps.finish), F.data == "grounding_exit")
 async def grounding_finish_exit(callback: CallbackQuery, state: FSMContext):
     await state.clear()
-    await callback.message.edit_text(GROUNDING_FINISH)
+    await callback.message.edit_text(GROUNDING_FINISH, parse_mode="HTML")   # <-- исправлено
     await callback.message.answer("Вы завершили упражнение. Главное меню:", reply_markup=main_menu)
     await callback.answer()
 
@@ -195,7 +195,7 @@ async def stop_step_finish(callback: CallbackQuery, state: FSMContext):
 @exercises_router.callback_query(StateFilter(StopSteps.finish), F.data == "stop_exit")
 async def stop_finish_exit(callback: CallbackQuery, state: FSMContext):
     await state.clear()
-    await callback.message.edit_text(STOP_FINISH)
+    await callback.message.edit_text(STOP_FINISH, parse_mode="HTML")   # <-- исправлено
     await callback.message.answer("Вы завершили упражнение. Главное меню:", reply_markup=main_menu)
     await callback.answer()
 
