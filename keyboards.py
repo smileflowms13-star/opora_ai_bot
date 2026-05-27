@@ -19,7 +19,10 @@ from texts import (
     BREATHING_BUTTON,
     GROUNDING_BUTTON,
     REMINDER_DISABLE_BUTTON,
-    STOP_BUTTON,                     # новый импорт
+    STOP_BUTTON,
+    CONTROL_ZONE_BUTTON,
+    SELF_COMPASSION_BUTTON,
+    UNSENT_LETTER_BUTTON,
 )
 
 focus_menu = ReplyKeyboardMarkup(
@@ -107,12 +110,12 @@ exercises_menu = ReplyKeyboardMarkup(
             KeyboardButton(text=GROUNDING_BUTTON),
         ],
         [
-            KeyboardButton(text=STOP_BUTTON),                # теперь использует константу
-            KeyboardButton(text="✍️ Письмо без отправки"),
+            KeyboardButton(text=STOP_BUTTON),
+            KeyboardButton(text=UNSENT_LETTER_BUTTON),
         ],
         [
-            KeyboardButton(text="🎯 Зона контроля"),
-            KeyboardButton(text="💛 Самосострадание"),
+            KeyboardButton(text=CONTROL_ZONE_BUTTON),
+            KeyboardButton(text=SELF_COMPASSION_BUTTON),
         ],
         [
             KeyboardButton(text=BREATHING_BUTTON),
@@ -200,4 +203,40 @@ def stop_continue_keyboard():
 def stop_finish_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏠 В главное меню", callback_data="stop_exit")],
+    ])
+
+# Инлайн-клавиатуры для Зоны контроля
+def control_zone_continue_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="▶️ Продолжить", callback_data="control_zone_next")],
+        [InlineKeyboardButton(text="🚪 Выйти", callback_data="control_zone_exit")],
+    ])
+
+def control_zone_finish_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🏠 В главное меню", callback_data="control_zone_exit")],
+    ])
+
+# Инлайн-клавиатуры для Самосострадания
+def self_compassion_continue_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="▶️ Продолжить", callback_data="self_compassion_next")],
+        [InlineKeyboardButton(text="🚪 Выйти", callback_data="self_compassion_exit")],
+    ])
+
+def self_compassion_finish_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🏠 В главное меню", callback_data="self_compassion_exit")],
+    ])
+
+# Инлайн-клавиатуры для Письма без отправки
+def unsent_letter_continue_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="▶️ Продолжить", callback_data="unsent_letter_next")],
+        [InlineKeyboardButton(text="🚪 Выйти", callback_data="unsent_letter_exit")],
+    ])
+
+def unsent_letter_finish_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🏠 В главное меню", callback_data="unsent_letter_exit")],
     ])

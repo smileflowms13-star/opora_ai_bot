@@ -13,11 +13,26 @@ from texts import (
     GROUNDING_STEP_TOUCH, GROUNDING_STEP_HEAR, GROUNDING_STEP_SMELL,
     GROUNDING_STEP_TASTE, GROUNDING_FINISH,
     STOP_BUTTON, STOP_INTRO, STOP_STEP_STOP, STOP_STEP_BREATHE,
-    STOP_STEP_OBSERVE, STOP_STEP_PROCEED, STOP_FINISH
+    STOP_STEP_OBSERVE, STOP_STEP_PROCEED, STOP_FINISH,
+    CONTROL_ZONE_BUTTON, CONTROL_ZONE_INTRO, CONTROL_ZONE_STEP_OUT,
+    CONTROL_ZONE_STEP_INFLUENCE, CONTROL_ZONE_STEP_ACTION, CONTROL_ZONE_FINISH,
+    SELF_COMPASSION_BUTTON, SELF_COMPASSION_INTRO, SELF_COMPASSION_STEP_TOUCH,
+    SELF_COMPASSION_STEP_PHRASE1, SELF_COMPASSION_STEP_PHRASE2,
+    SELF_COMPASSION_STEP_PHRASE3, SELF_COMPASSION_STEP_BREATHE, SELF_COMPASSION_FINISH,
+    UNSENT_LETTER_BUTTON, UNSENT_LETTER_INTRO, UNSENT_LETTER_STEP_TO,
+    UNSENT_LETTER_STEP_EMOTION, UNSENT_LETTER_STEP_SAY, UNSENT_LETTER_STEP_NEED,
+    UNSENT_LETTER_FINISH,
+    STREAK_UPDATED_TEXT, STREAK_LEVEL_UP_TO_FLOWER, STREAK_LEVEL_UP_TO_TREE,
 )
-from keyboards import breathing_continue_keyboard, breathing_finish_keyboard, main_menu
-from keyboards import grounding_continue_keyboard, grounding_finish_keyboard
-from keyboards import stop_continue_keyboard, stop_finish_keyboard
+from keyboards import (
+    breathing_continue_keyboard, breathing_finish_keyboard, main_menu,
+    grounding_continue_keyboard, grounding_finish_keyboard,
+    stop_continue_keyboard, stop_finish_keyboard,
+    control_zone_continue_keyboard, control_zone_finish_keyboard,
+    self_compassion_continue_keyboard, self_compassion_finish_keyboard,
+    unsent_letter_continue_keyboard, unsent_letter_finish_keyboard,
+)
+from database import update_streak, get_streak
 
 exercises_router = Router()
 
@@ -44,6 +59,30 @@ class StopSteps(StatesGroup):
     breathe = State()
     observe = State()
     proceed = State()
+    finish = State()
+
+class ControlZoneSteps(StatesGroup):
+    intro = State()
+    out_of_control = State()
+    influence = State()
+    action = State()
+    finish = State()
+
+class SelfCompassionSteps(StatesGroup):
+    intro = State()
+    touch = State()
+    phrase1 = State()
+    phrase2 = State()
+    phrase3 = State()
+    breathe = State()
+    finish = State()
+
+class UnsentLetterSteps(StatesGroup):
+    intro = State()
+    to = State()
+    emotion = State()
+    say = State()
+    need = State()
     finish = State()
 
 # ===== Дыхание по квадрату =====
@@ -138,8 +177,19 @@ async def grounding_step_finish(callback: CallbackQuery, state: FSMContext):
 @exercises_router.callback_query(StateFilter(GroundingSteps.finish), F.data == "grounding_exit")
 async def grounding_finish_exit(callback: CallbackQuery, state: FSMContext):
     await state.clear()
-    await callback.message.edit_text(GROUNDING_FINISH, parse_mode="HTML")   # <-- исправлено
+    await callback.message.edit_text(GROUNDING_FINISH, parse_mode="HTML")
     await callback.message.answer("Вы завершили упражнение. Главное меню:", reply_markup=main_menu)
+
+    # Стрик
+    update_streak(callback.from_user.id)
+    streak_data = get_streak(callback.from_user.id)
+    if streak_data["current_streak"] == 30:
+        await callback.message.answer(STREAK_LEVEL_UP_TO_TREE)
+    elif streak_data["current_streak"] == 7:
+        await callback.message.answer(STREAK_LEVEL_UP_TO_FLOWER)
+    else:
+        await callback.message.answer(STREAK_UPDATED_TEXT.format(streak=streak_data["current_streak"]))
+
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(GroundingSteps), F.data == "grounding_exit")
@@ -195,8 +245,19 @@ async def stop_step_finish(callback: CallbackQuery, state: FSMContext):
 @exercises_router.callback_query(StateFilter(StopSteps.finish), F.data == "stop_exit")
 async def stop_finish_exit(callback: CallbackQuery, state: FSMContext):
     await state.clear()
-    await callback.message.edit_text(STOP_FINISH, parse_mode="HTML")   # <-- исправлено
+    await callback.message.edit_text(STOP_FINISH, parse_mode="HTML")
     await callback.message.answer("Вы завершили упражнение. Главное меню:", reply_markup=main_menu)
+
+    # Стрик
+    update_streak(callback.from_user.id)
+    streak_data = get_streak(callback.from_user.id)
+    if streak_data["current_streak"] == 30:
+        await callback.message.answer(STREAK_LEVEL_UP_TO_TREE)
+    elif streak_data["current_streak"] == 7:
+        await callback.message.answer(STREAK_LEVEL_UP_TO_FLOWER)
+    else:
+        await callback.message.answer(STREAK_UPDATED_TEXT.format(streak=streak_data["current_streak"]))
+
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(StopSteps), F.data == "stop_exit")
@@ -208,5 +269,209 @@ async def exit_stop(callback: CallbackQuery, state: FSMContext):
 
 @exercises_router.message(StateFilter(StopSteps), Command("cancel"))
 async def cancel_stop(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer("Упражнение отменено. Главное меню:", reply_markup=main_menu)
+
+# ===== Упражнение Зона контроля =====
+@exercises_router.message(F.text == CONTROL_ZONE_BUTTON)
+async def start_control_zone(message: Message, state: FSMContext):
+    await state.clear()
+    logging.info(f"User {message.from_user.id} started Control Zone exercise")
+    await state.set_state(ControlZoneSteps.intro)
+    await message.answer(CONTROL_ZONE_INTRO, reply_markup=control_zone_continue_keyboard(), parse_mode="HTML")
+
+@exercises_router.callback_query(StateFilter(ControlZoneSteps.intro), F.data == "control_zone_next")
+async def control_zone_step_out(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(ControlZoneSteps.out_of_control)
+    await callback.message.edit_text(CONTROL_ZONE_STEP_OUT, reply_markup=control_zone_continue_keyboard(), parse_mode="HTML")
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(ControlZoneSteps.out_of_control), F.data == "control_zone_next")
+async def control_zone_step_influence(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(ControlZoneSteps.influence)
+    await callback.message.edit_text(CONTROL_ZONE_STEP_INFLUENCE, reply_markup=control_zone_continue_keyboard(), parse_mode="HTML")
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(ControlZoneSteps.influence), F.data == "control_zone_next")
+async def control_zone_step_action(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(ControlZoneSteps.action)
+    await callback.message.edit_text(CONTROL_ZONE_STEP_ACTION, reply_markup=control_zone_continue_keyboard(), parse_mode="HTML")
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(ControlZoneSteps.action), F.data == "control_zone_next")
+async def control_zone_step_finish(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(ControlZoneSteps.finish)
+    await callback.message.edit_text(CONTROL_ZONE_FINISH, reply_markup=control_zone_finish_keyboard(), parse_mode="HTML")
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(ControlZoneSteps.finish), F.data == "control_zone_exit")
+async def control_zone_finish_exit(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await callback.message.edit_text(CONTROL_ZONE_FINISH, parse_mode="HTML")
+    await callback.message.answer("Вы завершили упражнение. Главное меню:", reply_markup=main_menu)
+
+    # Стрик
+    update_streak(callback.from_user.id)
+    streak_data = get_streak(callback.from_user.id)
+    if streak_data["current_streak"] == 30:
+        await callback.message.answer(STREAK_LEVEL_UP_TO_TREE)
+    elif streak_data["current_streak"] == 7:
+        await callback.message.answer(STREAK_LEVEL_UP_TO_FLOWER)
+    else:
+        await callback.message.answer(STREAK_UPDATED_TEXT.format(streak=streak_data["current_streak"]))
+
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(ControlZoneSteps), F.data == "control_zone_exit")
+async def exit_control_zone(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await callback.message.edit_text("Упражнение прервано. Возвращаемся в главное меню.")
+    await callback.message.answer("Главное меню", reply_markup=main_menu)
+    await callback.answer()
+
+@exercises_router.message(StateFilter(ControlZoneSteps), Command("cancel"))
+async def cancel_control_zone(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer("Упражнение отменено. Главное меню:", reply_markup=main_menu)
+
+# ===== Упражнение Самосострадание =====
+@exercises_router.message(F.text == SELF_COMPASSION_BUTTON)
+async def start_self_compassion(message: Message, state: FSMContext):
+    await state.clear()
+    logging.info(f"User {message.from_user.id} started Self-Compassion exercise")
+    await state.set_state(SelfCompassionSteps.intro)
+    await message.answer(SELF_COMPASSION_INTRO, reply_markup=self_compassion_continue_keyboard(), parse_mode="HTML")
+
+@exercises_router.callback_query(StateFilter(SelfCompassionSteps.intro), F.data == "self_compassion_next")
+async def self_compassion_step_touch(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(SelfCompassionSteps.touch)
+    await callback.message.edit_text(SELF_COMPASSION_STEP_TOUCH, reply_markup=self_compassion_continue_keyboard(), parse_mode="HTML")
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(SelfCompassionSteps.touch), F.data == "self_compassion_next")
+async def self_compassion_step_phrase1(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(SelfCompassionSteps.phrase1)
+    await callback.message.edit_text(SELF_COMPASSION_STEP_PHRASE1, reply_markup=self_compassion_continue_keyboard(), parse_mode="HTML")
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(SelfCompassionSteps.phrase1), F.data == "self_compassion_next")
+async def self_compassion_step_phrase2(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(SelfCompassionSteps.phrase2)
+    await callback.message.edit_text(SELF_COMPASSION_STEP_PHRASE2, reply_markup=self_compassion_continue_keyboard(), parse_mode="HTML")
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(SelfCompassionSteps.phrase2), F.data == "self_compassion_next")
+async def self_compassion_step_phrase3(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(SelfCompassionSteps.phrase3)
+    await callback.message.edit_text(SELF_COMPASSION_STEP_PHRASE3, reply_markup=self_compassion_continue_keyboard(), parse_mode="HTML")
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(SelfCompassionSteps.phrase3), F.data == "self_compassion_next")
+async def self_compassion_step_breathe(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(SelfCompassionSteps.breathe)
+    await callback.message.edit_text(SELF_COMPASSION_STEP_BREATHE, reply_markup=self_compassion_continue_keyboard(), parse_mode="HTML")
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(SelfCompassionSteps.breathe), F.data == "self_compassion_next")
+async def self_compassion_step_finish(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(SelfCompassionSteps.finish)
+    await callback.message.edit_text(SELF_COMPASSION_FINISH, reply_markup=self_compassion_finish_keyboard(), parse_mode="HTML")
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(SelfCompassionSteps.finish), F.data == "self_compassion_exit")
+async def self_compassion_finish_exit(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await callback.message.edit_text(SELF_COMPASSION_FINISH, parse_mode="HTML")
+    await callback.message.answer("Вы завершили упражнение. Главное меню:", reply_markup=main_menu)
+
+    # Стрик
+    update_streak(callback.from_user.id)
+    streak_data = get_streak(callback.from_user.id)
+    if streak_data["current_streak"] == 30:
+        await callback.message.answer(STREAK_LEVEL_UP_TO_TREE)
+    elif streak_data["current_streak"] == 7:
+        await callback.message.answer(STREAK_LEVEL_UP_TO_FLOWER)
+    else:
+        await callback.message.answer(STREAK_UPDATED_TEXT.format(streak=streak_data["current_streak"]))
+
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(SelfCompassionSteps), F.data == "self_compassion_exit")
+async def exit_self_compassion(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await callback.message.edit_text("Упражнение прервано. Возвращаемся в главное меню.")
+    await callback.message.answer("Главное меню", reply_markup=main_menu)
+    await callback.answer()
+
+@exercises_router.message(StateFilter(SelfCompassionSteps), Command("cancel"))
+async def cancel_self_compassion(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer("Упражнение отменено. Главное меню:", reply_markup=main_menu)
+
+# ===== Упражнение Письмо без отправки =====
+@exercises_router.message(F.text == UNSENT_LETTER_BUTTON)
+async def start_unsent_letter(message: Message, state: FSMContext):
+    await state.clear()
+    logging.info(f"User {message.from_user.id} started Unsent Letter exercise")
+    await state.set_state(UnsentLetterSteps.intro)
+    await message.answer(UNSENT_LETTER_INTRO, reply_markup=unsent_letter_continue_keyboard(), parse_mode="HTML")
+
+@exercises_router.callback_query(StateFilter(UnsentLetterSteps.intro), F.data == "unsent_letter_next")
+async def unsent_letter_step_to(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(UnsentLetterSteps.to)
+    await callback.message.edit_text(UNSENT_LETTER_STEP_TO, reply_markup=unsent_letter_continue_keyboard(), parse_mode="HTML")
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(UnsentLetterSteps.to), F.data == "unsent_letter_next")
+async def unsent_letter_step_emotion(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(UnsentLetterSteps.emotion)
+    await callback.message.edit_text(UNSENT_LETTER_STEP_EMOTION, reply_markup=unsent_letter_continue_keyboard(), parse_mode="HTML")
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(UnsentLetterSteps.emotion), F.data == "unsent_letter_next")
+async def unsent_letter_step_say(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(UnsentLetterSteps.say)
+    await callback.message.edit_text(UNSENT_LETTER_STEP_SAY, reply_markup=unsent_letter_continue_keyboard(), parse_mode="HTML")
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(UnsentLetterSteps.say), F.data == "unsent_letter_next")
+async def unsent_letter_step_need(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(UnsentLetterSteps.need)
+    await callback.message.edit_text(UNSENT_LETTER_STEP_NEED, reply_markup=unsent_letter_continue_keyboard(), parse_mode="HTML")
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(UnsentLetterSteps.need), F.data == "unsent_letter_next")
+async def unsent_letter_step_finish(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(UnsentLetterSteps.finish)
+    await callback.message.edit_text(UNSENT_LETTER_FINISH, reply_markup=unsent_letter_finish_keyboard(), parse_mode="HTML")
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(UnsentLetterSteps.finish), F.data == "unsent_letter_exit")
+async def unsent_letter_finish_exit(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await callback.message.edit_text(UNSENT_LETTER_FINISH, parse_mode="HTML")
+    await callback.message.answer("Вы завершили упражнение. Главное меню:", reply_markup=main_menu)
+
+    # Стрик
+    update_streak(callback.from_user.id)
+    streak_data = get_streak(callback.from_user.id)
+    if streak_data["current_streak"] == 30:
+        await callback.message.answer(STREAK_LEVEL_UP_TO_TREE)
+    elif streak_data["current_streak"] == 7:
+        await callback.message.answer(STREAK_LEVEL_UP_TO_FLOWER)
+    else:
+        await callback.message.answer(STREAK_UPDATED_TEXT.format(streak=streak_data["current_streak"]))
+
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(UnsentLetterSteps), F.data == "unsent_letter_exit")
+async def exit_unsent_letter(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await callback.message.edit_text("Упражнение прервано. Возвращаемся в главное меню.")
+    await callback.message.answer("Главное меню", reply_markup=main_menu)
+    await callback.answer()
+
+@exercises_router.message(StateFilter(UnsentLetterSteps), Command("cancel"))
+async def cancel_unsent_letter(message: Message, state: FSMContext):
     await state.clear()
     await message.answer("Упражнение отменено. Главное меню:", reply_markup=main_menu)
