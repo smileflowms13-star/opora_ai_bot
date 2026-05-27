@@ -1,5 +1,6 @@
 ﻿import re
 from collections import Counter
+from datetime import date, timedelta
 
 from database import (
     get_diary_entries,
@@ -7,6 +8,7 @@ from database import (
     get_sleep_stats,
     get_trigger_entries,
     get_trigger_count,
+    get_streak,
 )
 
 
@@ -497,6 +499,88 @@ def _make_week_focus(
     )
 
 
+def _get_week_stats(telegram_id: int) -> dict:
+    """
+    Собирает статистику за последние 7 дней.
+    """
+    week_ago = date.today() - timedelta(days=7)
+
+    # Все записи дневника и триггеров
+    diary_entries = get_diary_entries(telegram_id)
+    trigger_entries = get_trigger_entries(telegram_id)
+
+    # Фильтруем по дате за 7 дней
+    week_diary = []
+    for row in diary_entries:
+        created_str = _get_value(row, "created_at", -1, "")
+        if created_str:
+            try:
+                created_date = date.fromisoformat(created_str[:10])
+                if created_date >= week_ago:
+                    week_diary.append(row)
+            except Exception:
+                continue
+        else:
+            # Если нет даты, пропускаем
+            continue
+
+    week_triggers = []
+    for row in trigger_entries:
+        created_str = _get_value(row, "created_at", -1, "")
+        if created_str:
+            try:
+                created_date = date.fromisoformat(created_str[:10])
+                if created_date >= week_ago:
+                    week_triggers.append(row)
+            except Exception:
+                continue
+
+    # Считаем средние по дневнику
+    if week_diary:
+        moods, anxieties, energies, _, _ = _extract_diary_data(week_diary)
+        avg_mood = _round_1(sum(moods) / len(moods)) if moods else 0
+        avg_anxiety = _round_1(sum(anxieties) / len(anxieties)) if anxieties else 0
+        avg_energy = _round_1(sum(energies) / len(energies)) if energies else 0
+    else:
+        avg_mood = 0
+        avg_anxiety = 0
+        avg_energy = 0
+
+    # Стрик
+    try:
+        streak_data = get_streak(telegram_id)
+    except Exception:
+        streak_data = {"current_streak": 0, "level_emoji": "🌱", "level_name": "росток"}
+
+    return {
+        "diary_count": len(week_diary),
+        "trigger_count": len(week_triggers),
+        "avg_mood": avg_mood,
+        "avg_anxiety": avg_anxiety,
+        "avg_energy": avg_energy,
+        "streak": streak_data,
+    }
+
+
+def _format_week_report(stats: dict) -> str:
+    text = "📅 Еженедельный отчёт\n\n"
+
+    text += f"— Записей дневника: {stats['diary_count']}\n"
+    text += f"— Разборов триггеров: {stats['trigger_count']}\n"
+
+    if stats['diary_count'] > 0:
+        text += f"— Среднее настроение: {stats['avg_mood']}/10\n"
+        text += f"— Средняя тревога: {stats['avg_anxiety']}/10\n"
+        text += f"— Средняя энергия: {stats['avg_energy']}/10\n"
+    else:
+        text += "Пока нет записей дневника за эту неделю.\n"
+
+    streak = stats['streak']
+    text += f"— Росток: {streak['level_emoji']} {streak['level_name']} ({streak['current_streak']} дн.)\n"
+
+    return text
+
+
 def build_user_map(telegram_id: int) -> str:
     diary_entries = get_diary_entries(telegram_id)
     trigger_entries = get_trigger_entries(telegram_id)
@@ -517,6 +601,10 @@ def build_user_map(telegram_id: int) -> str:
     except Exception:
         trigger_count = len(trigger_entries) if trigger_entries else 0
 
+    # Еженедельный отчёт
+    week_stats = _get_week_stats(telegram_id)
+    week_report = _format_week_report(week_stats)
+
     if diary_count == 0 and trigger_count == 0:
         return (
             "📊 Моя карта\n\n"
@@ -525,7 +613,8 @@ def build_user_map(telegram_id: int) -> str:
             "— 📝 вести дневник состояния;\n"
             "— 🧠 разбирать триггеры.\n\n"
             "Через несколько записей здесь появятся повторяющиеся темы, "
-            "эмоции, потребности и мягкий фокус на неделю."
+            "эмоции, потребности и мягкий фокус на неделю.\n\n"
+            + week_report
         )
 
     moods, anxieties, energies, sleep_values, notes = _extract_diary_data(diary_entries)
@@ -574,6 +663,8 @@ def build_user_map(telegram_id: int) -> str:
     text = "📊 Моя карта\n\n"
 
     text += "Это не диагноз и не оценка личности. Это мягкое зеркало по твоим записям: что чаще повторяется, где может быть нагрузка и на что можно опереться.\n\n"
+
+    text += week_report + "\n"
 
     text += "📝 Дневник состояния:\n"
     text += f"Записей: {diary_count}\n"

@@ -24,6 +24,9 @@ from texts import (
     SELF_COMPASSION_BUTTON,
     UNSENT_LETTER_BUTTON,
     BREATHING_46_BUTTON,
+    CHANGE_FOCUS_BUTTON,
+    CRISIS_PLAN_BUTTON,
+    FAST_MOOD_EMOJI_MAP,
 )
 
 focus_menu = ReplyKeyboardMarkup(
@@ -146,6 +149,8 @@ settings_menu = ReplyKeyboardMarkup(
         [KeyboardButton(text=SETTINGS_DELETE_DATA_BUTTON)],
         [KeyboardButton(text=DAILY_REMINDER_BUTTON)],
         [KeyboardButton(text=REMINDER_DISABLE_BUTTON)],
+        [KeyboardButton(text=CHANGE_FOCUS_BUTTON)],
+        [KeyboardButton(text=CRISIS_PLAN_BUTTON)],   # новая кнопка
         [KeyboardButton(text=SETTINGS_BACK_BUTTON)],
     ],
     resize_keyboard=True,
@@ -253,3 +258,27 @@ def breathing46_finish_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏠 В главное меню", callback_data="breathing46_exit")],
     ])
+
+# Клавиатуры для быстрого дневника
+def fast_mood_keyboard():
+    buttons = []
+    row = []
+    for emoji_text, _ in FAST_MOOD_EMOJI_MAP.items():
+        row.append(InlineKeyboardButton(text=emoji_text, callback_data=f"fast_mood_{emoji_text}"))
+        if len(row) == 2:
+            buttons.append(row)
+            row = []
+    if row:
+        buttons.append(row)
+    return InlineKeyboardMarkup(inline_keyboard=buttons)
+
+def diary_mode_keyboard():
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [KeyboardButton(text="⚡ Быстрая отметка")],
+            [KeyboardButton(text="📝 Полный дневник")],
+            [KeyboardButton(text="❌ Отмена")],
+        ],
+        resize_keyboard=True,
+        one_time_keyboard=True,
+    )

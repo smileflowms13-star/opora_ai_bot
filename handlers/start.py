@@ -85,8 +85,7 @@ async def onboarding_focus(message: Message, state: FSMContext):
 async def focus_already_set(message: Message):
     await message.answer(
         "Твой фокус внимания уже выбран. Если хочешь его изменить, "
-        "ты можешь сделать это в настройках (скоро появится такая возможность).\n\n"
-        "А пока выбери, с чего начнём:",
+        "перейди в Настройки и нажми «🔄 Сменить фокус».",
         reply_markup=main_menu,
     )
 

@@ -6,7 +6,7 @@ from aiogram.enums import ChatAction
 from aiogram.types import Message
 
 from ai_client import generate_ai_reply
-from database import add_user, save_message, get_recent_messages, get_user_focus
+from database import add_user, save_message, get_recent_messages, get_user_focus, get_crisis_plan
 from safety import is_high_risk, sanitize_user_input
 from texts import CRISIS_TEXT
 
@@ -59,6 +59,11 @@ async def fallback_message(message: Message):
     # Safety first.
     if is_high_risk(user_text):
         await message.answer(CRISIS_TEXT)
+        # Показываем кризисный план, если он есть
+        if user:
+            plan = get_crisis_plan(user.id)
+            if plan:
+                await message.answer(f"Твой кризисный план:\n\n{plan}")
         return
 
     # Команды не отправляем в AI.
@@ -78,7 +83,6 @@ async def fallback_message(message: Message):
     user_text_clean = sanitize_user_input(user_text)
     # -------------------------------------------------------------
 
-    # Сохраняем уже очищенную версию
     save_message(
         telegram_id=telegram_id,
         role="user",

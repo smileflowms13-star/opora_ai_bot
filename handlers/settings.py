@@ -4,13 +4,14 @@ from aiogram.fsm.state import State, StatesGroup
 from aiogram.filters import Command, StateFilter
 from aiogram.types import Message, ReplyKeyboardRemove
 
-from database import delete_user_data, reset_user_consent, set_daily_reminder, get_daily_reminder_settings, disable_reminder
+from database import delete_user_data, reset_user_consent, set_daily_reminder, get_daily_reminder_settings, disable_reminder, save_crisis_plan, get_crisis_plan
 from keyboards import (
     main_menu,
     settings_menu,
     delete_data_confirm_menu,
     withdraw_consent_confirm_menu,
     onboarding_menu,
+    focus_menu,
 )
 from texts import (
     DAILY_REMINDER_BUTTON,
@@ -21,6 +22,13 @@ from texts import (
     REMINDER_DISABLE_BUTTON,
     REMINDER_DISABLED_TEXT,
     REMINDER_ALREADY_DISABLED_TEXT,
+    CHANGE_FOCUS_BUTTON,
+    FOCUS_QUESTION_TEXT,
+    CRISIS_PLAN_BUTTON,
+    CRISIS_PLAN_PROMPT,
+    CRISIS_PLAN_SAVED,
+    CRISIS_PLAN_CURRENT,
+    CRISIS_PLAN_EMPTY,
     SETTINGS_BUTTON,
     SETTINGS_TEXT,
     SETTINGS_RULES_BUTTON,
@@ -38,10 +46,14 @@ from texts import (
     DATA_DELETED_TEXT,
     CONSENT_WITHDRAWN_TEXT,
 )
+from handlers.start import OnboardingStates
 
 
 class ReminderStates(StatesGroup):
     waiting_for_time = State()
+
+class CrisisPlanStates(StatesGroup):
+    waiting_for_plan = State()
 
 router = Router()
 
@@ -167,6 +179,19 @@ async def daily_reminder_button(message: Message, state: FSMContext):
     await state.set_state(ReminderStates.waiting_for_time)
 
 
+@router.message(StateFilter(ReminderStates.waiting_for_time), Command("cancel"))
+async def cancel_reminder_time(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer("Установка напоминания отменена.", reply_markup=settings_menu)
+
+
+@router.message(StateFilter(ReminderStates.waiting_for_time), F.text == SETTINGS_BACK_BUTTON)
+@router.message(StateFilter(ReminderStates.waiting_for_time), F.text.contains("Главное меню"))
+async def exit_reminder_to_main(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer("Выберите, с чего начнём:", reply_markup=main_menu)
+
+
 @router.message(StateFilter(ReminderStates.waiting_for_time))
 async def process_reminder_time(message: Message, state: FSMContext):
     user = message.from_user
@@ -175,7 +200,7 @@ async def process_reminder_time(message: Message, state: FSMContext):
     time_text = message.text.strip()
     import re
     if not re.match(r'^\d{2}:\d{2}$', time_text):
-        await message.answer("Пожалуйста, введи время в формате ЧЧ:ММ (например, 21:00). Попробуй ещё раз:")
+        await message.answer("Пожалуйста, введи время в формате ЧЧ:ММ (например, 21:00). Попробуй ещё раз:\n\nИли нажми /cancel для отмены.")
         return
     set_daily_reminder(user.id, enabled=True, reminder_time=time_text)
     await message.answer(DAILY_REMINDER_SET_TEXT.format(time_text))
@@ -193,3 +218,44 @@ async def disable_reminder_handler(message: Message):
         return
     disable_reminder(user.id)
     await message.answer(REMINDER_DISABLED_TEXT, reply_markup=settings_menu)
+
+
+@router.message(F.text == CHANGE_FOCUS_BUTTON)
+async def change_focus_start(message: Message, state: FSMContext):
+    await state.set_state(OnboardingStates.focus)
+    await message.answer(FOCUS_QUESTION_TEXT, reply_markup=focus_menu)
+
+
+@router.message(F.text == CRISIS_PLAN_BUTTON)
+async def crisis_plan_start(message: Message, state: FSMContext):
+    user = message.from_user
+    if not user:
+        return
+    current_plan = get_crisis_plan(user.id)
+    if current_plan:
+        await message.answer(CRISIS_PLAN_CURRENT.format(plan=current_plan))
+    else:
+        await message.answer(CRISIS_PLAN_EMPTY)
+    await message.answer(CRISIS_PLAN_PROMPT)
+    await state.set_state(CrisisPlanStates.waiting_for_plan)
+
+
+@router.message(StateFilter(CrisisPlanStates.waiting_for_plan), Command("cancel"))
+@router.message(StateFilter(CrisisPlanStates.waiting_for_plan), F.text == "❌ Отмена")
+async def cancel_crisis_plan(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer("Заполнение кризисного плана отменено.", reply_markup=settings_menu)
+
+
+@router.message(StateFilter(CrisisPlanStates.waiting_for_plan))
+async def process_crisis_plan(message: Message, state: FSMContext):
+    user = message.from_user
+    if not user:
+        return
+    plan_text = message.text.strip()
+    if not plan_text:
+        await message.answer("Пожалуйста, напиши хотя бы одну строчку плана.")
+        return
+    save_crisis_plan(user.id, plan_text)
+    await state.clear()
+    await message.answer(CRISIS_PLAN_SAVED, reply_markup=settings_menu)

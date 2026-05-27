@@ -129,6 +129,9 @@ def init_db() -> None:
     if "consent_accepted" not in user_columns:
         _add_column_if_missing(cursor, "users", "consent_accepted", "INTEGER DEFAULT 0")
 
+    if "crisis_plan" not in user_columns:
+        _add_column_if_missing(cursor, "users", "crisis_plan", "TEXT")
+
     if "created_at" not in user_columns:
         _add_column_if_missing(cursor, "users", "created_at", "TEXT")
 
@@ -1916,3 +1919,23 @@ def get_streak(telegram_id: int) -> dict:
         "level_emoji": level_emoji,
         "level_name": level_name,
     }
+
+
+def save_crisis_plan(telegram_id: int, plan_text: str) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE users SET crisis_plan = ?, updated_at = datetime('now') WHERE telegram_id = ?",
+        (plan_text, telegram_id),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_crisis_plan(telegram_id: int) -> Optional[str]:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT crisis_plan FROM users WHERE telegram_id = ?", (telegram_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return row[0] if row and row[0] else None
