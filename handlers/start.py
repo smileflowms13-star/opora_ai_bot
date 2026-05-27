@@ -65,7 +65,6 @@ async def accept_consent(message: Message, state: FSMContext):
     )
 
 
-
 @router.message(StateFilter(OnboardingStates.focus), F.text.in_({FOCUS_ANXIETY_BUTTON, FOCUS_RELATIONSHIPS_BUTTON, FOCUS_RELAX_BUTTON, FOCUS_DIARY_BUTTON, FOCUS_OTHER_BUTTON}))
 async def onboarding_focus(message: Message, state: FSMContext):
     user = message.from_user
@@ -81,11 +80,20 @@ async def onboarding_focus(message: Message, state: FSMContext):
     await message.delete()
 
 
+# Новый обработчик: если фокус уже выбран, не отправляем кнопку в AI
+@router.message(F.text.in_({FOCUS_ANXIETY_BUTTON, FOCUS_RELATIONSHIPS_BUTTON, FOCUS_RELAX_BUTTON, FOCUS_DIARY_BUTTON, FOCUS_OTHER_BUTTON}))
+async def focus_already_set(message: Message):
+    await message.answer(
+        "Твой фокус внимания уже выбран. Если хочешь его изменить, "
+        "ты можешь сделать это в настройках (скоро появится такая возможность).\n\n"
+        "А пока выбери, с чего начнём:",
+        reply_markup=main_menu,
+    )
+
+
 @router.message(F.text == CONSENT_DECLINE_BUTTON)
 async def decline_consent(message: Message):
     await message.answer(
         UNDER_18_TEXT,
         reply_markup=ReplyKeyboardRemove(),
     )
-
-
