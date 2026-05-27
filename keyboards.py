@@ -23,6 +23,7 @@ from texts import (
     CONTROL_ZONE_BUTTON,
     SELF_COMPASSION_BUTTON,
     UNSENT_LETTER_BUTTON,
+    BREATHING_46_BUTTON,
 )
 
 focus_menu = ReplyKeyboardMarkup(
@@ -106,7 +107,7 @@ relationships_menu = ReplyKeyboardMarkup(
 exercises_menu = ReplyKeyboardMarkup(
     keyboard=[
         [
-            KeyboardButton(text="🌬 Дыхание 4–6"),
+            KeyboardButton(text=BREATHING_46_BUTTON),
             KeyboardButton(text=GROUNDING_BUTTON),
         ],
         [
@@ -239,4 +240,16 @@ def unsent_letter_continue_keyboard():
 def unsent_letter_finish_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏠 В главное меню", callback_data="unsent_letter_exit")],
+    ])
+
+# Инлайн-клавиатуры для Дыхания 4–6
+def breathing46_continue_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="▶️ Продолжить", callback_data="breathing46_next")],
+        [InlineKeyboardButton(text="🚪 Выйти", callback_data="breathing46_exit")],
+    ])
+
+def breathing46_finish_keyboard():
+    return InlineKeyboardMarkup(inline_keyboard=[
+        [InlineKeyboardButton(text="🏠 В главное меню", callback_data="breathing46_exit")],
     ])

@@ -22,6 +22,8 @@ from texts import (
     UNSENT_LETTER_BUTTON, UNSENT_LETTER_INTRO, UNSENT_LETTER_STEP_TO,
     UNSENT_LETTER_STEP_EMOTION, UNSENT_LETTER_STEP_SAY, UNSENT_LETTER_STEP_NEED,
     UNSENT_LETTER_FINISH,
+    BREATHING_46_BUTTON, BREATHING_46_INTRO, BREATHING_46_STEP_INHALE,
+    BREATHING_46_STEP_EXHALE, BREATHING_46_FINISH,
     STREAK_UPDATED_TEXT, STREAK_LEVEL_UP_TO_FLOWER, STREAK_LEVEL_UP_TO_TREE,
 )
 from keyboards import (
@@ -31,6 +33,7 @@ from keyboards import (
     control_zone_continue_keyboard, control_zone_finish_keyboard,
     self_compassion_continue_keyboard, self_compassion_finish_keyboard,
     unsent_letter_continue_keyboard, unsent_letter_finish_keyboard,
+    breathing46_continue_keyboard, breathing46_finish_keyboard,
 )
 from database import update_streak, get_streak
 
@@ -83,6 +86,12 @@ class UnsentLetterSteps(StatesGroup):
     emotion = State()
     say = State()
     need = State()
+    finish = State()
+
+class Breathing46Steps(StatesGroup):
+    intro = State()
+    inhale = State()
+    exhale = State()
     finish = State()
 
 # ===== Дыхание по квадрату =====
@@ -473,5 +482,61 @@ async def exit_unsent_letter(callback: CallbackQuery, state: FSMContext):
 
 @exercises_router.message(StateFilter(UnsentLetterSteps), Command("cancel"))
 async def cancel_unsent_letter(message: Message, state: FSMContext):
+    await state.clear()
+    await message.answer("Упражнение отменено. Главное меню:", reply_markup=main_menu)
+
+# ===== Дыхание 4–6 =====
+@exercises_router.message(F.text == BREATHING_46_BUTTON)
+async def start_breathing46(message: Message, state: FSMContext):
+    await state.clear()
+    logging.info(f"User {message.from_user.id} started Breathing 4-6")
+    await state.set_state(Breathing46Steps.intro)
+    await message.answer(BREATHING_46_INTRO, reply_markup=breathing46_continue_keyboard(), parse_mode="HTML")
+
+@exercises_router.callback_query(StateFilter(Breathing46Steps.intro), F.data == "breathing46_next")
+async def breathing46_step_inhale(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(Breathing46Steps.inhale)
+    await callback.message.edit_text(BREATHING_46_STEP_INHALE, reply_markup=breathing46_continue_keyboard(), parse_mode="HTML")
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(Breathing46Steps.inhale), F.data == "breathing46_next")
+async def breathing46_step_exhale(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(Breathing46Steps.exhale)
+    await callback.message.edit_text(BREATHING_46_STEP_EXHALE, reply_markup=breathing46_continue_keyboard(), parse_mode="HTML")
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(Breathing46Steps.exhale), F.data == "breathing46_next")
+async def breathing46_step_finish(callback: CallbackQuery, state: FSMContext):
+    await state.set_state(Breathing46Steps.finish)
+    await callback.message.edit_text(BREATHING_46_FINISH, reply_markup=breathing46_finish_keyboard(), parse_mode="HTML")
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(Breathing46Steps.finish), F.data == "breathing46_exit")
+async def breathing46_finish_exit(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await callback.message.edit_text(BREATHING_46_FINISH, parse_mode="HTML")
+    await callback.message.answer("Вы завершили упражнение. Главное меню:", reply_markup=main_menu)
+
+    # Стрик
+    update_streak(callback.from_user.id)
+    streak_data = get_streak(callback.from_user.id)
+    if streak_data["current_streak"] == 30:
+        await callback.message.answer(STREAK_LEVEL_UP_TO_TREE)
+    elif streak_data["current_streak"] == 7:
+        await callback.message.answer(STREAK_LEVEL_UP_TO_FLOWER)
+    else:
+        await callback.message.answer(STREAK_UPDATED_TEXT.format(streak=streak_data["current_streak"]))
+
+    await callback.answer()
+
+@exercises_router.callback_query(StateFilter(Breathing46Steps), F.data == "breathing46_exit")
+async def exit_breathing46(callback: CallbackQuery, state: FSMContext):
+    await state.clear()
+    await callback.message.edit_text("Упражнение прервано. Возвращаемся в главное меню.")
+    await callback.message.answer("Главное меню", reply_markup=main_menu)
+    await callback.answer()
+
+@exercises_router.message(StateFilter(Breathing46Steps), Command("cancel"))
+async def cancel_breathing46(message: Message, state: FSMContext):
     await state.clear()
     await message.answer("Упражнение отменено. Главное меню:", reply_markup=main_menu)
