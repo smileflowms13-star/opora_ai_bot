@@ -1,5 +1,5 @@
 ﻿import sqlite3
-from datetime import datetime
+from datetime import datetime, date
 from pathlib import Path
 from typing import Any, Optional
 
@@ -251,6 +251,19 @@ def init_db() -> None:
             focus_area TEXT,
             created_at TEXT NOT NULL DEFAULT (datetime('now')),
             FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
+        )
+        """
+    )
+
+    # Таблица для стриков (ростков)
+    cursor.execute(
+        """
+        CREATE TABLE IF NOT EXISTS streaks (
+            telegram_id INTEGER PRIMARY KEY,
+            current_streak INTEGER DEFAULT 0,
+            longest_streak INTEGER DEFAULT 0,
+            last_action_date TEXT,
+            FOREIGN KEY (telegram_id) REFERENCES users(telegram_id) ON DELETE CASCADE
         )
         """
     )
@@ -1816,3 +1829,90 @@ def disable_reminder(telegram_id: int) -> None:
     )
     conn.commit()
     conn.close()
+
+
+def _today_str() -> str:
+    return date.today().isoformat()
+
+
+def update_streak(telegram_id: int) -> None:
+    """Обновляет ежедневный стрик пользователя."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    today = _today_str()
+
+    cursor.execute(
+        "SELECT current_streak, longest_streak, last_action_date FROM streaks WHERE telegram_id = ?",
+        (telegram_id,),
+    )
+    row = cursor.fetchone()
+
+    if row is None:
+        # Первое действие
+        cursor.execute(
+            "INSERT INTO streaks (telegram_id, current_streak, longest_streak, last_action_date) VALUES (?, 1, 1, ?)",
+            (telegram_id, today),
+        )
+        conn.commit()
+        conn.close()
+        return
+
+    current = int(row["current_streak"])
+    longest = int(row["longest_streak"])
+    last_date = row["last_action_date"]
+
+    if last_date == today:
+        # Уже было действие сегодня — ничего не делаем
+        conn.close()
+        return
+
+    # Проверяем, было ли действие вчера
+    yesterday = (date.today() - date.timedelta(days=1)).isoformat()
+    if last_date == yesterday:
+        new_current = current + 1
+    else:
+        new_current = 1
+
+    new_longest = max(longest, new_current)
+
+    cursor.execute(
+        "UPDATE streaks SET current_streak = ?, longest_streak = ?, last_action_date = ? WHERE telegram_id = ?",
+        (new_current, new_longest, today, telegram_id),
+    )
+    conn.commit()
+    conn.close()
+
+
+def get_streak(telegram_id: int) -> dict:
+    """Возвращает статистику стрика."""
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "SELECT current_streak, longest_streak FROM streaks WHERE telegram_id = ?",
+        (telegram_id,),
+    )
+    row = cursor.fetchone()
+    conn.close()
+
+    if row is None:
+        return {"current_streak": 0, "longest_streak": 0, "level_emoji": "🌱", "level_name": "росток"}
+
+    current = int(row["current_streak"])
+    longest = int(row["longest_streak"])
+
+    if current >= 30:
+        level_emoji = "🌳"
+        level_name = "дерево"
+    elif current >= 7:
+        level_emoji = "🌼"
+        level_name = "цветок"
+    else:
+        level_emoji = "🌱"
+        level_name = "росток"
+
+    return {
+        "current_streak": current,
+        "longest_streak": longest,
+        "level_emoji": level_emoji,
+        "level_name": level_name,
+    }

@@ -5,7 +5,8 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
 
 from keyboards import main_menu
-from database import save_diary_entry, get_diary_stats
+from database import save_diary_entry, get_diary_stats, update_streak, get_streak
+from texts import STREAK_UPDATED_TEXT, STREAK_LEVEL_UP_TO_FLOWER, STREAK_LEVEL_UP_TO_TREE
 
 
 router = Router()
@@ -230,6 +231,16 @@ async def diary_note(message: Message, state: FSMContext):
     response += "Хочешь посмотреть краткую статистику дневника? Напиши /diary_stats"
 
     await message.answer(response, reply_markup=main_menu)
+
+    # Обновляем стрик
+    update_streak(telegram_id)
+    streak_data = get_streak(telegram_id)
+    if streak_data["current_streak"] == 30:
+        await message.answer(STREAK_LEVEL_UP_TO_TREE)
+    elif streak_data["current_streak"] == 7:
+        await message.answer(STREAK_LEVEL_UP_TO_FLOWER)
+    else:
+        await message.answer(STREAK_UPDATED_TEXT.format(streak=streak_data["current_streak"]))
 
 
 @router.message(Command("diary_stats"))
