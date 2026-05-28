@@ -1,4 +1,4 @@
-﻿import re
+import re
 from collections import Counter
 from datetime import date, timedelta
 

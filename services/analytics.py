@@ -1,7 +1,6 @@
 from database import get_diary_entries
 from datetime import date, timedelta
 
-# Расширенный словарь: ключ — корень или слово, значение — список упражнений
 QUICK_SUGGEST_MAP = {
     "тревог": ["Дыхание 4–6", "5-4-3-2-1"],
     "тревож": ["Дыхание 4–6", "5-4-3-2-1"],

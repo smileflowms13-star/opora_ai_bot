@@ -2,7 +2,7 @@ from aiogram import Router
 from aiogram.filters import Command
 from aiogram.types import Message
 
-from analytics import get_personalized_suggestion
+from services.analytics import get_personalized_suggestion
 from keyboards import main_menu
 
 router = Router()

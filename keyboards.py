@@ -183,84 +183,98 @@ withdraw_consent_confirm_menu = ReplyKeyboardMarkup(
 def breathing_continue_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Продолжить", callback_data="breathing_next")],
+        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
         [InlineKeyboardButton(text="🚪 Выйти", callback_data="breathing_exit")],
     ])
 
 def breathing_finish_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Вернуться в меню", callback_data="breathing_exit")],
+        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
     ])
 
 # Инлайн-клавиатуры для упражнения 5-4-3-2-1
 def grounding_continue_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="▶️ Продолжить", callback_data="grounding_next")],
+        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
         [InlineKeyboardButton(text="🚪 Выйти", callback_data="grounding_exit")],
     ])
 
 def grounding_finish_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏠 В главное меню", callback_data="grounding_exit")],
+        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
     ])
 
 # Инлайн-клавиатуры для упражнения STOP
 def stop_continue_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="▶️ Продолжить", callback_data="stop_next")],
+        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
         [InlineKeyboardButton(text="🚪 Выйти", callback_data="stop_exit")],
     ])
 
 def stop_finish_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏠 В главное меню", callback_data="stop_exit")],
+        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
     ])
 
 # Инлайн-клавиатуры для Зоны контроля
 def control_zone_continue_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="▶️ Продолжить", callback_data="control_zone_next")],
+        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
         [InlineKeyboardButton(text="🚪 Выйти", callback_data="control_zone_exit")],
     ])
 
 def control_zone_finish_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏠 В главное меню", callback_data="control_zone_exit")],
+        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
     ])
 
 # Инлайн-клавиатуры для Самосострадания
 def self_compassion_continue_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="▶️ Продолжить", callback_data="self_compassion_next")],
+        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
         [InlineKeyboardButton(text="🚪 Выйти", callback_data="self_compassion_exit")],
     ])
 
 def self_compassion_finish_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏠 В главное меню", callback_data="self_compassion_exit")],
+        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
     ])
 
 # Инлайн-клавиатуры для Письма без отправки
 def unsent_letter_continue_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="▶️ Продолжить", callback_data="unsent_letter_next")],
+        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
         [InlineKeyboardButton(text="🚪 Выйти", callback_data="unsent_letter_exit")],
     ])
 
 def unsent_letter_finish_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏠 В главное меню", callback_data="unsent_letter_exit")],
+        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
     ])
 
 # Инлайн-клавиатуры для Дыхания 4–6
 def breathing46_continue_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="▶️ Продолжить", callback_data="breathing46_next")],
+        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
         [InlineKeyboardButton(text="🚪 Выйти", callback_data="breathing46_exit")],
     ])
 
 def breathing46_finish_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="🏠 В главное меню", callback_data="breathing46_exit")],
+        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
     ])
 
 # Клавиатуры для быстрого дневника

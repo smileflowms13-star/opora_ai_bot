@@ -3,18 +3,14 @@ from aiogram.filters import Command, StateFilter
 from aiogram.fsm.context import FSMContext
 from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, CallbackQuery, ReplyKeyboardMarkup, KeyboardButton
-from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 
 from keyboards import main_menu, diary_mode_keyboard, fast_mood_keyboard
-from database import save_diary_entry, get_diary_stats, update_streak, get_streak
 from texts import (
-    STREAK_UPDATED_TEXT,
-    STREAK_LEVEL_UP_TO_FLOWER,
-    STREAK_LEVEL_UP_TO_TREE,
     FAST_MOOD_PROMPT,
     FAST_MOOD_SAVED,
     FAST_MOOD_EMOJI_MAP,
 )
+from services.diary_service import save_and_process_diary_entry, get_diary_stats_message
 
 router = Router()
 
@@ -69,7 +65,7 @@ async def start_diary(message: Message, state: FSMContext):
 @router.message(StateFilter(DiaryStates.choose_mode), F.text == "⚡ Быстрая отметка")
 async def fast_mood_start(message: Message, state: FSMContext):
     await message.answer(FAST_MOOD_PROMPT, reply_markup=fast_mood_keyboard())
-    await state.set_state(DiaryStates.mood)  # используем состояние mood, но для быстрой отметки
+    await state.set_state(DiaryStates.mood)
 
 @router.message(StateFilter(DiaryStates.choose_mode), F.text == "📝 Полный дневник")
 async def full_diary_start(message: Message, state: FSMContext):
@@ -90,13 +86,10 @@ async def fast_mood_callback(callback: CallbackQuery, state: FSMContext):
     mood_score = FAST_MOOD_EMOJI_MAP.get(emoji_text, 5)
     telegram_id = callback.from_user.id
 
-    # Сохраняем запись дневника с этой эмоцией
-    save_diary_entry(
+    # Сохраняем запись и обрабатываем стрик через сервис
+    _, streak_message = save_and_process_diary_entry(
         telegram_id=telegram_id,
         mood_score=mood_score,
-        anxiety_score=None,
-        energy_score=None,
-        sleep_quality=None,
         note=emoji_text,
     )
 
@@ -104,24 +97,15 @@ async def fast_mood_callback(callback: CallbackQuery, state: FSMContext):
     await callback.message.edit_text(FAST_MOOD_SAVED)
     await callback.answer("Сохранено!")
 
-    # Стрик
-    update_streak(telegram_id)
-    streak_data = get_streak(telegram_id)
-    if streak_data["current_streak"] == 30:
-        await callback.message.answer(STREAK_LEVEL_UP_TO_TREE)
-    elif streak_data["current_streak"] == 7:
-        await callback.message.answer(STREAK_LEVEL_UP_TO_FLOWER)
+    if streak_message:
+        await callback.message.answer(streak_message, reply_markup=main_menu)
     else:
-        await callback.message.answer(STREAK_UPDATED_TEXT.format(streak=streak_data["current_streak"]))
-
-    await callback.message.answer("Главное меню", reply_markup=main_menu)
+        await callback.message.answer("Главное меню", reply_markup=main_menu)
 
 @router.message(StateFilter(DiaryStates.mood))
 async def diary_mood(message: Message, state: FSMContext):
-    # Проверяем, не быстрая ли отметка (текст кнопки)
-    if message.text in [key for key in FAST_MOOD_EMOJI_MAP.keys()]:
-        # Игнорируем текстовые кнопки, они обрабатываются callback
-        return
+    if message.text in FAST_MOOD_EMOJI_MAP:
+        return  # игнорируем текстовые кнопки быстрой отметки
 
     score = parse_score(message.text or "")
     if score is None:
@@ -136,8 +120,6 @@ async def diary_mood(message: Message, state: FSMContext):
         "10 — очень сильная тревога"
     )
     await state.set_state(DiaryStates.anxiety)
-
-# ... остальные обработчики (anxiety, energy, sleep, note) без изменений
 
 @router.message(StateFilter(DiaryStates.anxiety))
 async def diary_anxiety(message: Message, state: FSMContext):
@@ -179,27 +161,31 @@ async def diary_sleep(message: Message, state: FSMContext):
 async def diary_note(message: Message, state: FSMContext):
     note = (message.text or "").strip()
     if not note:
-        await message.answer("Напиши хотя бы пару слов.\n\nНапример: «много работы», «ссора», «не ответил человек», «плохо спала».")
+        await message.answer(
+            "Напиши хотя бы пару слов.\n\n"
+            "Например: «много работы», «ссора», «не ответил человек», «плохо спала»."
+        )
         return
 
     data = await state.get_data()
     telegram_id = message.from_user.id if message.from_user else 0
 
-    save_diary_entry(
-        telegram_id=telegram_id,
-        mood_score=data.get("mood_score"),
-        anxiety_score=data.get("anxiety_score"),
-        energy_score=data.get("energy_score"),
-        sleep_quality=data.get("sleep_quality"),
-        note=note,
-    )
-
-    await state.clear()
-
     mood = data.get("mood_score")
     anxiety = data.get("anxiety_score")
     energy = data.get("energy_score")
     sleep_quality = data.get("sleep_quality")
+
+    # Сохраняем запись и обрабатываем стрик через сервис
+    _, streak_message = save_and_process_diary_entry(
+        telegram_id=telegram_id,
+        mood_score=mood,
+        anxiety_score=anxiety,
+        energy_score=energy,
+        sleep_quality=sleep_quality,
+        note=note,
+    )
+
+    await state.clear()
 
     response = (
         "Готово. Я сохранил запись в дневник 📝\n\n"
@@ -217,35 +203,14 @@ async def diary_note(message: Message, state: FSMContext):
 
     await message.answer(response, reply_markup=main_menu)
 
-    # Стрик
-    update_streak(telegram_id)
-    streak_data = get_streak(telegram_id)
-    if streak_data["current_streak"] == 30:
-        await message.answer(STREAK_LEVEL_UP_TO_TREE)
-    elif streak_data["current_streak"] == 7:
-        await message.answer(STREAK_LEVEL_UP_TO_FLOWER)
-    else:
-        await message.answer(STREAK_UPDATED_TEXT.format(streak=streak_data["current_streak"]))
+    if streak_message:
+        await message.answer(streak_message)
 
-# Команда /diary_stats остаётся без изменений
 @router.message(Command("diary_stats"))
 async def diary_stats_command(message: Message):
     if not message.from_user:
         await message.answer("Не смог определить пользователя.")
         return
-    stats = get_diary_stats(message.from_user.id)
-    if not stats:
-        await message.answer(
-            "Пока нет записей в дневнике.\n\nНажми 📝 Дневник или напиши /diary, чтобы создать первую запись.",
-            reply_markup=main_menu
-        )
-        return
-    await message.answer(
-        "Краткая статистика дневника:\n\n"
-        f"Записей: {stats['count']}\n"
-        f"Среднее настроение: {stats['avg_mood']}/10\n"
-        f"Средняя тревога: {stats['avg_anxiety']}/10\n"
-        f"Средняя энергия: {stats['avg_energy']}/10\n\n"
-        "Это пока простая статистика. Позже на её основе мы сделаем «Мою карту».",
-        reply_markup=main_menu
-    )
+
+    msg = get_diary_stats_message(message.from_user.id)
+    await message.answer(msg, reply_markup=main_menu)

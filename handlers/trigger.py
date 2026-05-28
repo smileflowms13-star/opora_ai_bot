@@ -5,8 +5,9 @@ from aiogram.fsm.state import StatesGroup, State
 from aiogram.types import Message, ReplyKeyboardMarkup, KeyboardButton
 
 from keyboards import main_menu
-from database import save_trigger_entry, get_trigger_count, update_streak, get_streak
-from texts import STREAK_UPDATED_TEXT, STREAK_LEVEL_UP_TO_FLOWER, STREAK_LEVEL_UP_TO_TREE
+from database import get_trigger_count
+from services.streak_service import process_streak
+from services.trigger_service import save_and_format_trigger
 
 
 router = Router()
@@ -192,10 +193,10 @@ async def trigger_need(message: Message, state: FSMContext):
     await state.update_data(need=need)
 
     data = await state.get_data()
-
     telegram_id = message.from_user.id if message.from_user else 0
 
-    save_trigger_entry(
+    # Сохраняем и получаем готовый ответ
+    response = save_and_format_trigger(
         telegram_id=telegram_id,
         situation=data.get("situation"),
         thought=data.get("thought"),
@@ -206,37 +207,12 @@ async def trigger_need(message: Message, state: FSMContext):
     )
 
     await state.clear()
-
-    response = (
-        "Готово. Я сохранил разбор триггера 🧠\n\n"
-        "Вот цепочка, которую мы увидели:\n\n"
-        f"Ситуация: {data.get('situation')}\n"
-        f"Мысль: {data.get('thought')}\n"
-        f"Эмоция: {data.get('emotion')}\n"
-        f"Тело: {data.get('body_reaction')}\n"
-        f"Импульс: {data.get('impulse')}\n"
-        f"Потребность: {data.get('need')}\n\n"
-        "Мягкий вывод:\n"
-        "Похоже, тебя задела не только сама ситуация, а то значение, которое мозг ей придал. "
-        "Это не значит, что с тобой что-то не так. Это сигнал, что была важная потребность.\n\n"
-        "Что можно сделать сейчас:\n"
-        "1. Сделать паузу 5–10 минут.\n"
-        "2. Не действовать на пике эмоции.\n"
-        "3. Спросить себя: «Какой самый бережный следующий шаг?»\n\n"
-        "Если состояние всё ещё сильное, можно нажать 🆘 «Меня накрыло»."
-    )
-
     await message.answer(response, reply_markup=main_menu)
 
     # Обновляем стрик
-    update_streak(telegram_id)
-    streak_data = get_streak(telegram_id)
-    if streak_data["current_streak"] == 30:
-        await message.answer(STREAK_LEVEL_UP_TO_TREE)
-    elif streak_data["current_streak"] == 7:
-        await message.answer(STREAK_LEVEL_UP_TO_FLOWER)
-    else:
-        await message.answer(STREAK_UPDATED_TEXT.format(streak=streak_data["current_streak"]))
+    streak_msg = process_streak(telegram_id)
+    if streak_msg:
+        await message.answer(streak_msg)
 
 
 @router.message(Command("trigger_stats"))

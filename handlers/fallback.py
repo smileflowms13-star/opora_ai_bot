@@ -9,7 +9,7 @@ from ai_client import generate_ai_reply
 from database import add_user, save_message, get_recent_messages, get_user_focus, get_crisis_plan
 from safety import is_high_risk, sanitize_user_input
 from texts import CRISIS_TEXT
-from analytics import get_quick_exercise_suggestions
+from services.analytics import get_quick_exercise_suggestions
 
 logger = logging.getLogger(__name__)
 
