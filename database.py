@@ -1,12 +1,13 @@
 ﻿import sqlite3
 from datetime import datetime, date, timedelta
 from pathlib import Path
+import os
 from typing import Any, Optional
 
 
 BASE_DIR = Path(__file__).resolve().parent
 DATA_DIR = BASE_DIR / "data"
-DB_PATH = DATA_DIR / "opora.db"
+DB_PATH = Path(os.environ.get("OPORA_DB_PATH", DATA_DIR / "opora.db"))
 
 
 def _now() -> str:
@@ -40,243 +41,7 @@ def _add_column_if_missing(
         )
 
 
-def init_db() -> None:
-    conn = get_connection()
-    cursor = conn.cursor()
 
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS users (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            telegram_id INTEGER NOT NULL UNIQUE,
-            username TEXT,
-            first_name TEXT,
-            age_confirmed INTEGER DEFAULT 0,
-            consent_accepted INTEGER DEFAULT 0,
-            created_at TEXT NOT NULL,
-            updated_at TEXT NOT NULL
-        )
-        """
-    )
-
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS messages (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            telegram_id INTEGER,
-            role TEXT NOT NULL,
-            content TEXT,
-            text TEXT,
-            is_high_risk INTEGER DEFAULT 0,
-            created_at TEXT NOT NULL
-        )
-        """
-    )
-
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS diary_entries (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            telegram_id INTEGER,
-            mood INTEGER,
-            anxiety INTEGER,
-            energy INTEGER,
-            sleep INTEGER,
-            sleep_quality INTEGER,
-            note TEXT,
-            created_at TEXT NOT NULL
-        )
-        """
-    )
-
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS trigger_entries (
-            id INTEGER PRIMARY KEY AUTOINCREMENT,
-            user_id INTEGER NOT NULL,
-            telegram_id INTEGER,
-            situation TEXT,
-            thought TEXT,
-            emotion TEXT,
-            body TEXT,
-            impulse TEXT,
-            need TEXT,
-            created_at TEXT NOT NULL
-        )
-        """
-    )
-
-    # Мягкие миграции для старых версий таблиц
-    user_columns = _get_table_columns(cursor, "users")
-
-    if "username" not in user_columns:
-        _add_column_if_missing(cursor, "users", "username", "TEXT")
-
-    if "first_name" not in user_columns:
-        _add_column_if_missing(cursor, "users", "first_name", "TEXT")
-
-    if "daily_reminder_enabled" not in user_columns:
-        _add_column_if_missing(cursor, "users", "daily_reminder_enabled", "INTEGER DEFAULT 0")
-
-    if "daily_reminder_time" not in user_columns:
-        _add_column_if_missing(cursor, "users", "daily_reminder_time", "TEXT")
-
-    if "age_confirmed" not in user_columns:
-        _add_column_if_missing(cursor, "users", "age_confirmed", "INTEGER DEFAULT 0")
-
-    if "consent_accepted" not in user_columns:
-        _add_column_if_missing(cursor, "users", "consent_accepted", "INTEGER DEFAULT 0")
-
-    if "crisis_plan" not in user_columns:
-        _add_column_if_missing(cursor, "users", "crisis_plan", "TEXT")
-
-    if "created_at" not in user_columns:
-        _add_column_if_missing(cursor, "users", "created_at", "TEXT")
-
-    if "updated_at" not in user_columns:
-        _add_column_if_missing(cursor, "users", "updated_at", "TEXT")
-
-    # Мультиязычность: поле language
-    if "language" not in user_columns:
-        _add_column_if_missing(cursor, "users", "language", "TEXT DEFAULT 'ru'")
-
-    message_columns = _get_table_columns(cursor, "messages")
-    if "user_id" not in message_columns:
-        _add_column_if_missing(cursor, "messages", "user_id", "INTEGER")
-
-    if "telegram_id" not in message_columns:
-        _add_column_if_missing(cursor, "messages", "telegram_id", "INTEGER")
-
-    if "role" not in message_columns:
-        _add_column_if_missing(cursor, "messages", "role", "TEXT")
-
-    if "content" not in message_columns:
-        _add_column_if_missing(cursor, "messages", "content", "TEXT")
-
-    if "text" not in message_columns:
-        _add_column_if_missing(cursor, "messages", "text", "TEXT")
-
-    if "is_high_risk" not in message_columns:
-        _add_column_if_missing(cursor, "messages", "is_high_risk", "INTEGER DEFAULT 0")
-
-    if "created_at" not in message_columns:
-        _add_column_if_missing(cursor, "messages", "created_at", "TEXT")
-
-    diary_columns = _get_table_columns(cursor, "diary_entries")
-    if "user_id" not in diary_columns:
-        _add_column_if_missing(cursor, "diary_entries", "user_id", "INTEGER")
-
-    if "telegram_id" not in diary_columns:
-        _add_column_if_missing(cursor, "diary_entries", "telegram_id", "INTEGER")
-
-    if "mood" not in diary_columns:
-        _add_column_if_missing(cursor, "diary_entries", "mood", "INTEGER")
-
-    if "anxiety" not in diary_columns:
-        _add_column_if_missing(cursor, "diary_entries", "anxiety", "INTEGER")
-
-    if "energy" not in diary_columns:
-        _add_column_if_missing(cursor, "diary_entries", "energy", "INTEGER")
-
-    if "sleep" not in diary_columns:
-        _add_column_if_missing(cursor, "diary_entries", "sleep", "INTEGER")
-
-    if "sleep_quality" not in diary_columns:
-        _add_column_if_missing(cursor, "diary_entries", "sleep_quality", "INTEGER")
-
-    if "note" not in diary_columns:
-        _add_column_if_missing(cursor, "diary_entries", "note", "TEXT")
-
-    if "created_at" not in diary_columns:
-        _add_column_if_missing(cursor, "diary_entries", "created_at", "TEXT")
-
-    trigger_columns = _get_table_columns(cursor, "trigger_entries")
-    if "user_id" not in trigger_columns:
-        _add_column_if_missing(cursor, "trigger_entries", "user_id", "INTEGER")
-
-    if "telegram_id" not in trigger_columns:
-        _add_column_if_missing(cursor, "trigger_entries", "telegram_id", "INTEGER")
-
-    if "situation" not in trigger_columns:
-        _add_column_if_missing(cursor, "trigger_entries", "situation", "TEXT")
-
-    if "thought" not in trigger_columns:
-        _add_column_if_missing(cursor, "trigger_entries", "thought", "TEXT")
-
-    if "emotion" not in trigger_columns:
-        _add_column_if_missing(cursor, "trigger_entries", "emotion", "TEXT")
-
-    if "body" not in trigger_columns:
-        _add_column_if_missing(cursor, "trigger_entries", "body", "TEXT")
-
-    if "impulse" not in trigger_columns:
-        _add_column_if_missing(cursor, "trigger_entries", "impulse", "TEXT")
-
-    if "need" not in trigger_columns:
-        _add_column_if_missing(cursor, "trigger_entries", "need", "TEXT")
-
-    if "created_at" not in trigger_columns:
-        _add_column_if_missing(cursor, "trigger_entries", "created_at", "TEXT")
-
-    try:
-        cursor.execute(
-            """
-            CREATE UNIQUE INDEX IF NOT EXISTS idx_users_telegram_id
-            ON users(telegram_id)
-            """
-        )
-    except sqlite3.IntegrityError:
-        pass
-
-    cursor.execute(
-        """
-        CREATE INDEX IF NOT EXISTS idx_messages_user_id
-        ON messages(user_id)
-        """
-    )
-
-    cursor.execute(
-        """
-        CREATE INDEX IF NOT EXISTS idx_diary_entries_user_id
-        ON diary_entries(user_id)
-        """
-    )
-
-    cursor.execute(
-        """
-        CREATE INDEX IF NOT EXISTS idx_trigger_entries_user_id
-        ON trigger_entries(user_id)
-        """
-    )
-
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS onboarding (
-            user_id INTEGER PRIMARY KEY,
-            focus_area TEXT,
-            created_at TEXT NOT NULL DEFAULT (datetime('now')),
-            FOREIGN KEY (user_id) REFERENCES users(id) ON DELETE CASCADE
-        )
-        """
-    )
-
-    # Таблица для стриков (ростков)
-    cursor.execute(
-        """
-        CREATE TABLE IF NOT EXISTS streaks (
-            telegram_id INTEGER PRIMARY KEY,
-            current_streak INTEGER DEFAULT 0,
-            longest_streak INTEGER DEFAULT 0,
-            last_action_date TEXT,
-            FOREIGN KEY (telegram_id) REFERENCES users(telegram_id) ON DELETE CASCADE
-        )
-        """
-    )
-
-    conn.commit()
-    conn.close()
 
 
 def _get_internal_user_id(
@@ -1407,7 +1172,7 @@ def delete_user_data(telegram_id: int) -> int:
     return deleted_rows
 
 
-init_db()
+
 
 
 def get_trigger_count(telegram_id: int) -> int:

@@ -1,5 +1,7 @@
 ﻿import asyncio
 import logging
+import subprocess
+import sys
 from aiogram import Bot, Dispatcher
 from aiogram.fsm.storage.memory import MemoryStorage
 from config import BOT_TOKEN
@@ -20,8 +22,6 @@ from handlers.garden import router as garden_router
 from handlers.quick_exercise import router as quick_exercise_router
 from handlers.fallback import router as fallback_router
 from scheduler import setup_scheduler
-
-# Новые импорты для мультиязычности
 from middlewares import LanguageMiddleware, ConsentMiddleware
 
 logging.basicConfig(
@@ -34,11 +34,14 @@ logging.basicConfig(
 )
 
 async def main():
+    # Применяем миграции перед стартом
+    logging.info("Applying database migrations...")
+    subprocess.run([sys.executable, "-m", "alembic", "upgrade", "head"], check=True)
+
     bot = Bot(token=BOT_TOKEN)
     storage = MemoryStorage()
     dp = Dispatcher(storage=storage)
 
-    # Регистрируем middleware (порядок важен: язык -> согласие)
     dp.message.middleware(LanguageMiddleware())
     dp.callback_query.middleware(LanguageMiddleware())
     dp.message.middleware(ConsentMiddleware())
