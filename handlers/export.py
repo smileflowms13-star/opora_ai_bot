@@ -1,83 +1,63 @@
-import tempfile
-import os
+import io
 from aiogram import Router
 from aiogram.filters import Command
-from aiogram.types import Message, FSInputFile
-
+from aiogram.types import Message, BufferedInputFile
 from database import get_diary_entries, get_trigger_entries
+from services.i18n import get_text
+from keyboards import get_main_menu
 
 router = Router()
 
-def _safe_get(row, key, default=""):
-    """Безопасно получает значение из sqlite3.Row по ключу."""
-    try:
-        return row[key] if key in row.keys() else default
-    except:
-        return default
-
-def _format_diary(entries) -> str:
-    if not entries:
-        return "Нет записей дневника.\n"
-    lines = ["=== ДНЕВНИК ==="]
-    for row in entries:
-        date_str = _safe_get(row, "created_at")
-        mood = _safe_get(row, "mood") or _safe_get(row, "mood_score")
-        anxiety = _safe_get(row, "anxiety") or _safe_get(row, "anxiety_score")
-        energy = _safe_get(row, "energy") or _safe_get(row, "energy_score")
-        sleep = _safe_get(row, "sleep_quality") or _safe_get(row, "sleep")
-        note = _safe_get(row, "note")
-        lines.append(f"Дата: {date_str}")
-        lines.append(f"  Настроение: {mood}/10")
-        lines.append(f"  Тревога: {anxiety}/10")
-        lines.append(f"  Энергия: {energy}/10")
-        lines.append(f"  Сон: {sleep}")
-        lines.append(f"  Заметка: {note}")
-        lines.append("")
-    return "\n".join(lines)
-
-def _format_triggers(entries) -> str:
-    if not entries:
-        return "Нет разборов триггеров.\n"
-    lines = ["=== РАЗБОРЫ ТРИГГЕРОВ ==="]
-    for row in entries:
-        date_str = _safe_get(row, "created_at")
-        situation = _safe_get(row, "situation")
-        thought = _safe_get(row, "thought")
-        emotion = _safe_get(row, "emotion")
-        body = _safe_get(row, "body") or _safe_get(row, "body_reaction")
-        impulse = _safe_get(row, "impulse")
-        need = _safe_get(row, "need")
-        lines.append(f"Дата: {date_str}")
-        lines.append(f"  Ситуация: {situation}")
-        lines.append(f"  Мысль: {thought}")
-        lines.append(f"  Эмоция: {emotion}")
-        lines.append(f"  Тело: {body}")
-        lines.append(f"  Импульс: {impulse}")
-        lines.append(f"  Потребность: {need}")
-        lines.append("")
-    return "\n".join(lines)
-
-@router.message(Command("export"))
-async def export_data(message: Message):
-    if not message.from_user:
-        await message.answer("Не смог определить пользователя.")
-        return
-
-    telegram_id = message.from_user.id
+def _build_export_text(telegram_id: int, lang: str) -> str:
     diary = get_diary_entries(telegram_id)
     triggers = get_trigger_entries(telegram_id)
+    parts = [get_text("export_header", lang)]
+    parts.append("\n" + get_text("export_diary_section", lang))
+    if diary:
+        for row in diary:
+            date = row["created_at"] if "created_at" in row.keys() else "?"
+            mood = row.get("mood") or row.get("mood_score") or "—"
+            anxiety = row.get("anxiety") or row.get("anxiety_score") or "—"
+            energy = row.get("energy") or row.get("energy_score") or "—"
+            sleep = row.get("sleep_quality") or row.get("sleep") or "—"
+            note = row.get("note") or ""
+            parts.append(
+                f"{date} | {get_text('export_mood', lang)} {mood} | {get_text('export_anxiety', lang)} {anxiety} | {get_text('export_energy', lang)} {energy} | {get_text('export_sleep', lang)} {sleep}"
+            )
+            if note:
+                parts.append(f"  {get_text('export_note', lang)} {note}")
+    else:
+        parts.append(get_text("export_no_diary", lang))
+    parts.append("\n" + get_text("export_trigger_section", lang))
+    if triggers:
+        for row in triggers:
+            date = row["created_at"] if "created_at" in row.keys() else "?"
+            situation = row.get("situation") or ""
+            thought = row.get("thought") or ""
+            emotion = row.get("emotion") or ""
+            body = row.get("body") or row.get("body_reaction") or ""
+            impulse = row.get("impulse") or ""
+            need = row.get("need") or ""
+            parts.append(
+                f"{date}\n"
+                f"  {get_text('export_situation', lang)} {situation}\n"
+                f"  {get_text('export_thought', lang)} {thought}\n"
+                f"  {get_text('export_emotion', lang)} {emotion}\n"
+                f"  {get_text('export_body', lang)} {body}\n"
+                f"  {get_text('export_impulse', lang)} {impulse}\n"
+                f"  {get_text('export_need', lang)} {need}"
+            )
+    else:
+        parts.append(get_text("export_no_triggers", lang))
+    return "\n".join(parts)
 
-    content = "ЭКСПОРТ ДАННЫХ ОПОРА AI\n\n"
-    content += _format_diary(diary)
-    content += "\n\n"
-    content += _format_triggers(triggers)
-
-    with tempfile.NamedTemporaryFile(mode="w", encoding="utf-8", delete=False, suffix=".txt") as f:
-        f.write(content)
-        f.flush()
-        file_path = f.name
-
-    try:
-        await message.answer_document(FSInputFile(file_path), caption="Ваши данные экспортированы.")
-    finally:
-        os.unlink(file_path)
+@router.message(Command("export"))
+async def export_command(message: Message, **kwargs):
+    if not message.from_user:
+        await message.answer("User not identified.")
+        return
+    lang = kwargs.get("lang", "ru")
+    telegram_id = message.from_user.id
+    text = _build_export_text(telegram_id, lang)
+    file = BufferedInputFile(text.encode("utf-8"), filename=f"opora_export_{telegram_id}.txt")
+    await message.answer_document(file, caption=get_text("export_caption", lang), reply_markup=get_main_menu(lang))

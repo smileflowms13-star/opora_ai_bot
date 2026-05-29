@@ -1,185 +1,122 @@
 ﻿from aiogram.types import InlineKeyboardMarkup, InlineKeyboardButton
 from aiogram.types import ReplyKeyboardMarkup, KeyboardButton
-from texts import CONSENT_ACCEPT_BUTTON, CONSENT_DECLINE_BUTTON
-from texts import (
-    SETTINGS_RULES_BUTTON,
-    SETTINGS_PRIVACY_BUTTON,
-    SETTINGS_WITHDRAW_CONSENT_BUTTON,
-    SETTINGS_DELETE_DATA_BUTTON,
-    SETTINGS_BACK_BUTTON,
-    DELETE_DATA_CONFIRM_BUTTON,
-    WITHDRAW_CONSENT_CONFIRM_BUTTON,
-    SETTINGS_CANCEL_BUTTON,
-    FOCUS_ANXIETY_BUTTON,
-    FOCUS_RELATIONSHIPS_BUTTON,
-    FOCUS_RELAX_BUTTON,
-    FOCUS_DIARY_BUTTON,
-    FOCUS_OTHER_BUTTON,
-    DAILY_REMINDER_BUTTON,
-    BREATHING_BUTTON,
-    GROUNDING_BUTTON,
-    REMINDER_DISABLE_BUTTON,
-    STOP_BUTTON,
-    CONTROL_ZONE_BUTTON,
-    SELF_COMPASSION_BUTTON,
-    UNSENT_LETTER_BUTTON,
-    BREATHING_46_BUTTON,
-    CHANGE_FOCUS_BUTTON,
-    CRISIS_PLAN_BUTTON,
-    FAST_MOOD_EMOJI_MAP,
-    GARDEN_BUTTON,
-)
+from services.i18n import get_text
 
-focus_menu = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text=FOCUS_ANXIETY_BUTTON)],
-        [KeyboardButton(text=FOCUS_RELATIONSHIPS_BUTTON)],
-        [KeyboardButton(text=FOCUS_RELAX_BUTTON)],
-        [KeyboardButton(text=FOCUS_DIARY_BUTTON)],
-        [KeyboardButton(text=FOCUS_OTHER_BUTTON)],
-    ],
-    resize_keyboard=True
-)
+def _btn(key: str, lang: str) -> KeyboardButton:
+    return KeyboardButton(text=get_text(key, lang))
 
-main_menu = ReplyKeyboardMarkup(
-    keyboard=[
-        [
-            KeyboardButton(text="🆘 Меня накрыло"),
-            KeyboardButton(text="💬 Поговорить"),
+def get_focus_menu(lang: str = "ru") -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [_btn("focus_anxiety_button", lang)],
+            [_btn("focus_relationships_button", lang)],
+            [_btn("focus_relax_button", lang)],
+            [_btn("focus_diary_button", lang)],
+            [_btn("focus_other_button", lang)],
         ],
-        [
-            KeyboardButton(text="🧠 Разобрать триггер"),
-            KeyboardButton(text="💔 Отношения"),
-        ],
-        [
-            KeyboardButton(text="📝 Дневник"),
-            KeyboardButton(text="🌿 Упражнения"),
-        ],
-        [
-            KeyboardButton(text="📊 Моя карта"),
-            KeyboardButton(text="⚙️ Настройки"),
-        ],
-        [
-            KeyboardButton(text=GARDEN_BUTTON),
-        ],
-    ],
-    resize_keyboard=True
-)
+        resize_keyboard=True
+    )
 
-sos_menu = ReplyKeyboardMarkup(
-    keyboard=[
-        [
-            KeyboardButton(text="😰 Тревога"),
-            KeyboardButton(text="😵 Паника"),
+def get_main_menu(lang: str = "ru") -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [_btn("sos_button_text", lang), _btn("talk_button_text", lang)],
+            [_btn("trigger_button_text", lang), _btn("relationships_button_text", lang)],
+            [_btn("diary_button_text", lang), _btn("exercises_button_text", lang)],
+            [_btn("map_button_text", lang), _btn("settings_button_text", lang)],
+            [_btn("garden_button", lang)],
         ],
-        [
-            KeyboardButton(text="🔥 Злость"),
-            KeyboardButton(text="😭 Хочется плакать"),
-        ],
-        [
-            KeyboardButton(text="💔 Боль/одиночество"),
-            KeyboardButton(text="🌙 Не могу уснуть"),
-        ],
-        [
-            KeyboardButton(text="⬅️ Главное меню"),
-        ],
-    ],
-    resize_keyboard=True
-)
+        resize_keyboard=True
+    )
 
-relationships_menu = ReplyKeyboardMarkup(
-    keyboard=[
-        [
-            KeyboardButton(text="💔 Меня игнорируют"),
-            KeyboardButton(text="😡 Я ревную"),
+def get_sos_menu(lang: str = "ru") -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [_btn("sos_anxiety", lang), _btn("sos_panic", lang)],
+            [_btn("sos_anger", lang), _btn("sos_cry", lang)],
+            [_btn("sos_loneliness", lang), _btn("sos_sleep", lang)],
+            [_btn("back_to_main_menu_button", lang)],
         ],
-        [
-            KeyboardButton(text="🥶 Партнёр холодный"),
-            KeyboardButton(text="🧲 Не могу отпустить"),
-        ],
-        [
-            KeyboardButton(text="🧨 Мы постоянно ссоримся"),
-            KeyboardButton(text="🚧 Хочу поставить границу"),
-        ],
-        [
-            KeyboardButton(text="✉️ Помоги написать сообщение"),
-        ],
-        [
-            KeyboardButton(text="⬅️ Главное меню"),
-        ],
-    ],
-    resize_keyboard=True
-)
+        resize_keyboard=True
+    )
 
-exercises_menu = ReplyKeyboardMarkup(
-    keyboard=[
-        [
-            KeyboardButton(text=BREATHING_46_BUTTON),
-            KeyboardButton(text=GROUNDING_BUTTON),
+def get_relationships_menu(lang: str = "ru") -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [_btn("rel_ignored", lang), _btn("rel_jealousy", lang)],
+            [_btn("rel_cold_partner", lang), _btn("rel_cannot_let_go", lang)],
+            [_btn("rel_conflicts", lang), _btn("rel_boundary", lang)],
+            [_btn("rel_help_write", lang)],
+            [_btn("back_to_main_menu_button", lang)],
         ],
-        [
-            KeyboardButton(text=STOP_BUTTON),
-            KeyboardButton(text=UNSENT_LETTER_BUTTON),
+        resize_keyboard=True
+    )
+
+def get_exercises_menu(lang: str = "ru") -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [_btn("breathing_46_button", lang), _btn("grounding_button", lang)],
+            [_btn("stop_button", lang), _btn("unsent_letter_button", lang)],
+            [_btn("control_zone_button", lang), _btn("self_compassion_button", lang)],
+            [_btn("breathing_button", lang)],
+            [_btn("back_to_main_menu_button", lang)],
         ],
-        [
-            KeyboardButton(text=CONTROL_ZONE_BUTTON),
-            KeyboardButton(text=SELF_COMPASSION_BUTTON),
+        resize_keyboard=True
+    )
+
+def get_onboarding_menu(lang: str = "ru") -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [_btn("consent_accept_button", lang)],
+            [_btn("consent_decline_button", lang)],
         ],
-        [
-            KeyboardButton(text=BREATHING_BUTTON),
+        resize_keyboard=True,
+        one_time_keyboard=False,
+        input_field_placeholder=get_text("confirm_age_placeholder", lang),
+    )
+
+def get_settings_menu(lang: str = "ru") -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [_btn("settings_rules_button", lang)],
+            [_btn("settings_privacy_button", lang)],
+            [_btn("settings_withdraw_consent_button", lang)],
+            [_btn("settings_delete_data_button", lang)],
+            [_btn("daily_reminder_button", lang)],
+            [_btn("reminder_disable_button", lang)],
+            [_btn("change_focus_button", lang)],
+            [_btn("crisis_plan_button", lang)],
+            [_btn("language_button", lang)],
+            [_btn("settings_back_button", lang)],
         ],
-        [
-            KeyboardButton(text="⬅️ Главное меню"),
+        resize_keyboard=True,
+        input_field_placeholder=get_text("settings_placeholder", lang),
+    )
+
+def get_delete_data_confirm_menu(lang: str = "ru") -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [_btn("delete_data_confirm_button", lang)],
+            [_btn("settings_cancel_button", lang)],
         ],
-    ],
-    resize_keyboard=True
-)
+        resize_keyboard=True,
+        input_field_placeholder=get_text("confirm_delete_placeholder", lang),
+    )
 
-onboarding_menu = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text=CONSENT_ACCEPT_BUTTON)],
-        [KeyboardButton(text=CONSENT_DECLINE_BUTTON)],
-    ],
-    resize_keyboard=True,
-    one_time_keyboard=False,
-    input_field_placeholder="Подтвердите возраст и правила",
-)
+def get_withdraw_consent_confirm_menu(lang: str = "ru") -> ReplyKeyboardMarkup:
+    return ReplyKeyboardMarkup(
+        keyboard=[
+            [_btn("withdraw_consent_confirm_button", lang)],
+            [_btn("settings_cancel_button", lang)],
+        ],
+        resize_keyboard=True,
+        input_field_placeholder=get_text("confirm_withdraw_placeholder", lang),
+    )
 
-settings_menu = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text=SETTINGS_RULES_BUTTON)],
-        [KeyboardButton(text=SETTINGS_PRIVACY_BUTTON)],
-        [KeyboardButton(text=SETTINGS_WITHDRAW_CONSENT_BUTTON)],
-        [KeyboardButton(text=SETTINGS_DELETE_DATA_BUTTON)],
-        [KeyboardButton(text=DAILY_REMINDER_BUTTON)],
-        [KeyboardButton(text=REMINDER_DISABLE_BUTTON)],
-        [KeyboardButton(text=CHANGE_FOCUS_BUTTON)],
-        [KeyboardButton(text=CRISIS_PLAN_BUTTON)],
-        [KeyboardButton(text=SETTINGS_BACK_BUTTON)],
-    ],
-    resize_keyboard=True,
-    input_field_placeholder="Выберите пункт настроек",
-)
+# Инлайн-клавиатуры оставим пока старыми (для упражнений), так как их текст не критичен для первого этапа.
+# При необходимости их тоже можно перевести.
+from texts import FAST_MOOD_EMOJI_MAP   # пока используем старый импорт
 
-delete_data_confirm_menu = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text=DELETE_DATA_CONFIRM_BUTTON)],
-        [KeyboardButton(text=SETTINGS_CANCEL_BUTTON)],
-    ],
-    resize_keyboard=True,
-    input_field_placeholder="Подтвердите удаление данных",
-)
-
-withdraw_consent_confirm_menu = ReplyKeyboardMarkup(
-    keyboard=[
-        [KeyboardButton(text=WITHDRAW_CONSENT_CONFIRM_BUTTON)],
-        [KeyboardButton(text=SETTINGS_CANCEL_BUTTON)],
-    ],
-    resize_keyboard=True,
-    input_field_placeholder="Подтвердите отзыв согласия",
-)
-
-# Инлайн-клавиатуры для дыхательного упражнения
 def breathing_continue_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="Продолжить", callback_data="breathing_next")],
@@ -193,7 +130,6 @@ def breathing_finish_keyboard():
         [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
     ])
 
-# Инлайн-клавиатуры для упражнения 5-4-3-2-1
 def grounding_continue_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="▶️ Продолжить", callback_data="grounding_next")],
@@ -207,7 +143,6 @@ def grounding_finish_keyboard():
         [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
     ])
 
-# Инлайн-клавиатуры для упражнения STOP
 def stop_continue_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="▶️ Продолжить", callback_data="stop_next")],
@@ -221,7 +156,6 @@ def stop_finish_keyboard():
         [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
     ])
 
-# Инлайн-клавиатуры для Зоны контроля
 def control_zone_continue_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="▶️ Продолжить", callback_data="control_zone_next")],
@@ -235,7 +169,6 @@ def control_zone_finish_keyboard():
         [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
     ])
 
-# Инлайн-клавиатуры для Самосострадания
 def self_compassion_continue_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="▶️ Продолжить", callback_data="self_compassion_next")],
@@ -249,7 +182,6 @@ def self_compassion_finish_keyboard():
         [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
     ])
 
-# Инлайн-клавиатуры для Письма без отправки
 def unsent_letter_continue_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="▶️ Продолжить", callback_data="unsent_letter_next")],
@@ -263,7 +195,6 @@ def unsent_letter_finish_keyboard():
         [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
     ])
 
-# Инлайн-клавиатуры для Дыхания 4–6
 def breathing46_continue_keyboard():
     return InlineKeyboardMarkup(inline_keyboard=[
         [InlineKeyboardButton(text="▶️ Продолжить", callback_data="breathing46_next")],
@@ -277,7 +208,6 @@ def breathing46_finish_keyboard():
         [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
     ])
 
-# Клавиатуры для быстрого дневника
 def fast_mood_keyboard():
     buttons = []
     row = []

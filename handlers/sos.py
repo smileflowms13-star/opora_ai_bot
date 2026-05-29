@@ -1,106 +1,57 @@
 from aiogram import Router, F
 from aiogram.filters import Command
 from aiogram.types import Message
-
-from keyboards import sos_menu
-
+from keyboards import get_sos_menu
+from services.i18n import get_text
 
 router = Router()
 
+# Вспомогательная функция для фильтров (рус + англ)
+def _btn(key): return [get_text(key, "ru"), get_text(key, "en")]
 
 @router.message(Command("sos"))
-async def cmd_sos(message: Message):
+async def sos_command(message: Message, **kwargs):
+    lang = kwargs.get("lang", "ru")
     await message.answer(
-        "Я рядом. Давай сначала поможем телу немного стабилизироваться.\n\n"
-        "Что сейчас ближе всего?",
-        reply_markup=sos_menu
+        get_text("sos_intro", lang),
+        reply_markup=get_sos_menu(lang),
     )
 
-
-@router.message(F.text == "🆘 Меня накрыло")
-async def sos_button(message: Message):
+# Кнопка "Меня накрыло" (из главного меню) – тоже локализована
+@router.message(F.text.in_(_btn("sos_button_text")))
+async def sos_button(message: Message, **kwargs):
+    lang = kwargs.get("lang", "ru")
     await message.answer(
-        "Я рядом. Давай сначала поможем телу немного стабилизироваться.\n\n"
-        "Что сейчас ближе всего?",
-        reply_markup=sos_menu
+        get_text("sos_intro", lang),
+        reply_markup=get_sos_menu(lang),
     )
 
+@router.message(F.text.in_(_btn("sos_anxiety")))
+async def anxiety_help(message: Message, **kwargs):
+    lang = kwargs.get("lang", "ru")
+    await message.answer(get_text("anxiety_help_text", lang))
 
-@router.message(F.text == "😰 Тревога")
-async def anxiety_help(message: Message):
-    await message.answer(
-        "Понимаю. Тревога может ощущаться очень неприятно.\n\n"
-        "Сейчас не будем глубоко анализировать — сначала попробуем снизить волну хотя бы на 1%.\n\n"
-        "Сделай так:\n\n"
-        "1. Поставь обе стопы на пол.\n"
-        "2. Почувствуй опору под ногами.\n"
-        "3. Сделай вдох на 4 счёта.\n"
-        "4. Сделай выдох на 6 счётов.\n"
-        "5. Повтори 6 раз.\n\n"
-        "Потом напиши: готово."
-    )
+@router.message(F.text.in_(_btn("sos_panic")))
+async def panic_help(message: Message, **kwargs):
+    lang = kwargs.get("lang", "ru")
+    await message.answer(get_text("panic_help_text", lang))
 
+@router.message(F.text.in_(_btn("sos_anger")))
+async def anger_help(message: Message, **kwargs):
+    lang = kwargs.get("lang", "ru")
+    await message.answer(get_text("anger_help_text", lang))
 
-@router.message(F.text == "😵 Паника")
-async def panic_help(message: Message):
-    await message.answer(
-        "Если это похоже на панику, давай вернём внимание в настоящий момент.\n\n"
-        "Назови про себя или вслух:\n\n"
-        "5 предметов, которые видишь;\n"
-        "4 ощущения в теле;\n"
-        "3 звука;\n"
-        "2 запаха;\n"
-        "1 вещь, которая сейчас в безопасности.\n\n"
-        "Напиши «готово», когда сделаешь."
-    )
+@router.message(F.text.in_(_btn("sos_cry")))
+async def cry_help(message: Message, **kwargs):
+    lang = kwargs.get("lang", "ru")
+    await message.answer(get_text("cry_help_text", lang))
 
+@router.message(F.text.in_(_btn("sos_loneliness")))
+async def loneliness_help(message: Message, **kwargs):
+    lang = kwargs.get("lang", "ru")
+    await message.answer(get_text("loneliness_help_text", lang))
 
-@router.message(F.text == "🔥 Злость")
-async def anger_help(message: Message):
-    await message.answer(
-        "Злость — это сигнал, что что-то важное было задето.\n\n"
-        "Сначала поможем телу безопасно выпустить напряжение:\n\n"
-        "1. Сожми кулаки на 5 секунд.\n"
-        "2. Медленно расслабь руки.\n"
-        "3. Повтори 5 раз.\n"
-        "4. Сделай длинный выдох.\n\n"
-        "Потом можно будет разобраться, какая граница была нарушена."
-    )
-
-
-@router.message(F.text == "😭 Хочется плакать")
-async def cry_help(message: Message):
-    await message.answer(
-        "Плакать — нормально. Это не слабость, а способ нервной системы сбросить напряжение.\n\n"
-        "Попробуй сейчас:\n\n"
-        "1. Положить руку на грудь или живот.\n"
-        "2. Сказать себе: «Мне сейчас больно, и я могу быть к себе мягче».\n"
-        "3. Сделать 3 медленных выдоха.\n\n"
-        "Я рядом. Напиши, что сейчас болит сильнее всего одним предложением."
-    )
-
-
-@router.message(F.text == "💔 Боль/одиночество")
-async def loneliness_help(message: Message):
-    await message.answer(
-        "Мне жаль, что тебе сейчас так одиноко.\n\n"
-        "Давай сделаем маленький шаг к опоре:\n\n"
-        "Ответь себе на 3 вопроса:\n"
-        "1. Что я сейчас чувствую?\n"
-        "2. Чего мне сейчас не хватает?\n"
-        "3. К кому я могу обратиться хотя бы коротким сообщением?\n\n"
-        "Если хочешь, я помогу сформулировать это сообщение."
-    )
-
-
-@router.message(F.text == "🌙 Не могу уснуть")
-async def sleep_help(message: Message):
-    await message.answer(
-        "Когда мысли крутятся перед сном, мозг пытается всё проконтролировать.\n\n"
-        "Попробуй технику «контейнер для мыслей»:\n\n"
-        "1. Напиши на бумаге или в заметках всё, что крутится в голове.\n"
-        "2. Рядом напиши: «Я вернусь к этому завтра».\n"
-        "3. Выбери одно маленькое действие на завтра.\n"
-        "4. Сейчас сделай 5 медленных выдохов.\n\n"
-        "Если хочешь, напиши мне главную мысль, которая не отпускает."
-    )
+@router.message(F.text.in_(_btn("sos_sleep")))
+async def sleep_help(message: Message, **kwargs):
+    lang = kwargs.get("lang", "ru")
+    await message.answer(get_text("sleep_help_text", lang))

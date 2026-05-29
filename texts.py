@@ -542,3 +542,6 @@ GARDEN_TREE = (
     "🌳 У тебя выросло крепкое дерево с глубокими корнями.\n"
     "Это знак устойчивости и внутренней опоры."
 )
+LANGUAGE_BUTTON = "🌐 Язык"
+LANGUAGE_SELECT_TEXT = "Выбери язык / Choose language:"
+LANGUAGE_CHANGED = "Язык изменён на русский ✅"

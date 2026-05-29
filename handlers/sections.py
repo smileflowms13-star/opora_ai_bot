@@ -1,112 +1,67 @@
 from aiogram import Router, F
 from aiogram.types import Message
-
-from keyboards import relationships_menu, exercises_menu
+from keyboards import get_relationships_menu, get_exercises_menu, get_main_menu
+from services.i18n import get_text
 
 router = Router()
 
-@router.message(F.text == "💬 Поговорить")
-async def talk_button(message: Message):
+@router.message(F.text.in_([get_text("talk_button_text", "ru"), get_text("talk_button_text", "en")]))
+async def talk_button(message: Message, **kwargs):
+    lang = kwargs.get("lang", "ru")
+    await message.answer(get_text("talk_text", lang))
+
+@router.message(F.text.in_([get_text("relationships_button_text", "ru"), get_text("relationships_button_text", "en")]))
+async def relationships_button(message: Message, **kwargs):
+    lang = kwargs.get("lang", "ru")
     await message.answer(
-        "Я здесь, чтобы выслушать. Расскажи, что у тебя на душе.\n\n"
-        "Можешь описать ситуацию, чувства или просто мысли, которые приходят в голову. "
-        "Я постараюсь понять и поддержать тебя."
+        get_text("relationships_text", lang),
+        reply_markup=get_relationships_menu(lang)
     )
 
-@router.message(F.text == "💔 Отношения")
-async def relationships_button(message: Message):
+@router.message(F.text.in_([get_text("rel_ignored", "ru"), get_text("rel_ignored", "en")]))
+async def ignored_button(message: Message, **kwargs):
+    lang = kwargs.get("lang", "ru")
+    await message.answer(get_text("ignored_text", lang))
+
+@router.message(F.text.in_([get_text("rel_jealousy", "ru"), get_text("rel_jealousy", "en")]))
+async def jealousy_button(message: Message, **kwargs):
+    lang = kwargs.get("lang", "ru")
+    await message.answer(get_text("jealousy_text", lang))
+
+@router.message(F.text.in_([get_text("rel_cold_partner", "ru"), get_text("rel_cold_partner", "en")]))
+async def cold_partner_button(message: Message, **kwargs):
+    lang = kwargs.get("lang", "ru")
+    await message.answer(get_text("cold_partner_text", lang))
+
+@router.message(F.text.in_([get_text("rel_cannot_let_go", "ru"), get_text("rel_cannot_let_go", "en")]))
+async def cannot_let_go_button(message: Message, **kwargs):
+    lang = kwargs.get("lang", "ru")
+    await message.answer(get_text("cannot_let_go_text", lang))
+
+@router.message(F.text.in_([get_text("rel_conflicts", "ru"), get_text("rel_conflicts", "en")]))
+async def conflicts_button(message: Message, **kwargs):
+    lang = kwargs.get("lang", "ru")
+    await message.answer(get_text("conflicts_text", lang))
+
+@router.message(F.text.in_([get_text("rel_boundary", "ru"), get_text("rel_boundary", "en")]))
+async def boundary_button(message: Message, **kwargs):
+    lang = kwargs.get("lang", "ru")
+    await message.answer(get_text("boundary_text", lang))
+
+@router.message(F.text.in_([get_text("rel_help_write", "ru"), get_text("rel_help_write", "en")]))
+async def help_write_message_button(message: Message, **kwargs):
+    lang = kwargs.get("lang", "ru")
+    await message.answer(get_text("help_write_text", lang))
+
+@router.message(F.text.in_([get_text("exercises_button_text", "ru"), get_text("exercises_button_text", "en")]))
+async def exercises_button(message: Message, **kwargs):
+    lang = kwargs.get("lang", "ru")
     await message.answer(
-        "Отношения часто цепляют самые чувствительные места.\n\n"
-        "Выбери, что ближе:",
-        reply_markup=relationships_menu
+        get_text("choose_exercise_text", lang),
+        reply_markup=get_exercises_menu(lang)
     )
 
-@router.message(F.text == "💔 Меня игнорируют")
-async def ignored_button(message: Message):
-    await message.answer(
-        "Понимаю. Когда важный человек долго не отвечает, тревога может резко подниматься.\n\n"
-        "Давай разделим факты и интерпретации.\n\n"
-        "Факт: человек не отвечает.\n\n"
-        "Интерпретация может быть:\n"
-        "— «я ему/ей не нужен/не нужна»;\n"
-        "— «меня бросят»;\n"
-        "— «я сделал/сделала что-то не так»;\n"
-        "— «со мной что-то не так».\n\n"
-        "Какая мысль звучит сильнее всего?"
-    )
-
-@router.message(F.text == "😡 Я ревную")
-async def jealousy_button(message: Message):
-    await message.answer(
-        "Ревность часто возникает там, где есть страх потерять связь, безопасность или значимость.\n\n"
-        "Давай начнём мягко:\n\n"
-        "Что именно запустило ревность?\n"
-        "Например: сообщение, лайк, молчание, встреча, сравнение, фантазия?"
-    )
-
-@router.message(F.text == "🥶 Партнёр холодный")
-async def cold_partner_button(message: Message):
-    await message.answer(
-        "Когда партнёр кажется холодным, это может сильно задевать.\n\n"
-        "Давай уточним:\n\n"
-        "Что именно ты называешь холодностью?\n"
-        "— мало пишет;\n"
-        "— не проявляет нежность;\n"
-        "— избегает разговоров;\n"
-        "— обесценивает;\n"
-        "— пропадает;\n"
-        "— другое?"
-    )
-
-@router.message(F.text == "🧲 Не могу отпустить")
-async def cannot_let_go_button(message: Message):
-    await message.answer(
-        "Отпустить бывает сложно не потому, что ты слабый/слабая, а потому что привязанность не выключается по команде.\n\n"
-        "Первый вопрос:\n\n"
-        "Что именно сложнее всего отпустить?\n"
-        "— человека;\n"
-        "— надежду;\n"
-        "— образ будущего;\n"
-        "— чувство вины;\n"
-        "— незавершённый разговор?"
-    )
-
-@router.message(F.text == "🧨 Мы постоянно ссоримся")
-async def conflicts_button(message: Message):
-    await message.answer(
-        "Повторяющиеся ссоры часто идут по одному сценарию.\n\n"
-        "Давай найдём цикл:\n\n"
-        "1. С чего обычно начинается ссора?\n"
-        "2. Что ты делаешь дальше?\n"
-        "3. Что делает другой человек?\n"
-        "4. Чем всё заканчивается?\n\n"
-        "Можешь ответить свободно одним сообщением."
-    )
-
-@router.message(F.text == "🚧 Хочу поставить границу")
-async def boundary_button(message: Message):
-    await message.answer(
-        "Граница — это не нападение, а способ сохранить контакт и уважение к себе.\n\n"
-        "Мягкая формула:\n\n"
-        "«Когда происходит ___, я чувствую ___. Мне важно ___. Поэтому я прошу/буду ___».\n\n"
-        "Напиши ситуацию, и я помогу сформулировать границу."
-    )
-
-@router.message(F.text == "✉️ Помоги написать сообщение")
-async def help_write_message_button(message: Message):
-    await message.answer(
-        "Конечно, давай вместе составим текст.\n\n"
-        "Опиши, пожалуйста:\n"
-        "— Кому ты хочешь написать?\n"
-        "— Что случилось?\n"
-        "— Какую главную мысль хочешь донести?\n"
-        "— Какой тон будет уместным (мягкий, спокойный, решительный)?\n\n"
-        "Я помогу подобрать слова и выстроить сообщение."
-    )
-
-@router.message(F.text == "🌿 Упражнения")
-async def exercises_button(message: Message):
-    await message.answer(
-        "Выбери упражнение:",
-        reply_markup=exercises_menu
-    )
+@router.message(F.text.in_([get_text("back_to_main_menu_button", "ru"), get_text("back_to_main_menu_button", "en")]))
+async def back_to_main_menu(message: Message, **kwargs):
+    lang = kwargs.get("lang", "ru")
+    await message.answer(get_text("back_to_main_menu", lang), reply_markup=get_main_menu(lang))

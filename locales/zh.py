@@ -1,0 +1,1 @@
+from locales.en import TEXTS

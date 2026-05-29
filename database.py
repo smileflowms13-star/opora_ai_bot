@@ -1,5 +1,5 @@
 ﻿import sqlite3
-from datetime import datetime, date
+from datetime import datetime, date, timedelta
 from pathlib import Path
 from typing import Any, Optional
 
@@ -137,6 +137,10 @@ def init_db() -> None:
 
     if "updated_at" not in user_columns:
         _add_column_if_missing(cursor, "users", "updated_at", "TEXT")
+
+    # Мультиязычность: поле language
+    if "language" not in user_columns:
+        _add_column_if_missing(cursor, "users", "language", "TEXT DEFAULT 'ru'")
 
     message_columns = _get_table_columns(cursor, "messages")
     if "user_id" not in message_columns:
@@ -1870,7 +1874,7 @@ def update_streak(telegram_id: int) -> None:
         return
 
     # Проверяем, было ли действие вчера
-    yesterday = (date.today() - date.timedelta(days=1)).isoformat()
+    yesterday = (date.today() - timedelta(days=1)).isoformat()
     if last_date == yesterday:
         new_current = current + 1
     else:
@@ -1939,3 +1943,24 @@ def get_crisis_plan(telegram_id: int) -> Optional[str]:
     row = cursor.fetchone()
     conn.close()
     return row[0] if row and row[0] else None
+
+
+# === Мультиязычность ===
+def get_user_language(telegram_id: int) -> Optional[str]:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute("SELECT language FROM users WHERE telegram_id = ?", (telegram_id,))
+    row = cursor.fetchone()
+    conn.close()
+    return row[0] if row else None
+
+
+def set_user_language(telegram_id: int, lang: str) -> None:
+    conn = get_connection()
+    cursor = conn.cursor()
+    cursor.execute(
+        "UPDATE users SET language = ?, updated_at = ? WHERE telegram_id = ?",
+        (lang, _now(), telegram_id),
+    )
+    conn.commit()
+    conn.close()

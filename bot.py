@@ -17,9 +17,12 @@ from handlers.suggest import router as suggest_router
 from handlers.export import router as export_router
 from handlers.ai_insight import router as ai_insight_router
 from handlers.garden import router as garden_router
-from handlers.quick_exercise import router as quick_exercise_router   # <-- новый
+from handlers.quick_exercise import router as quick_exercise_router
 from handlers.fallback import router as fallback_router
 from scheduler import setup_scheduler
+
+# Новые импорты для мультиязычности
+from middlewares import LanguageMiddleware, ConsentMiddleware
 
 logging.basicConfig(
     level=logging.INFO,
@@ -35,6 +38,11 @@ async def main():
     storage = MemoryStorage()
     dp = Dispatcher(storage=storage)
 
+    # Регистрируем middleware (порядок важен: язык -> согласие)
+    dp.message.middleware(LanguageMiddleware())
+    dp.callback_query.middleware(LanguageMiddleware())
+    dp.message.middleware(ConsentMiddleware())
+
     dp.include_router(start_router)
     dp.include_router(sections_router)
     dp.include_router(settings_router)
@@ -48,7 +56,7 @@ async def main():
     dp.include_router(suggest_router)
     dp.include_router(export_router)
     dp.include_router(ai_insight_router)
-    dp.include_router(quick_exercise_router)   # <-- перед fallback
+    dp.include_router(quick_exercise_router)
     dp.include_router(garden_router)
     dp.include_router(fallback_router)
 
