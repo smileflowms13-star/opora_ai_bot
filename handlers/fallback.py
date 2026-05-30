@@ -8,6 +8,7 @@ from database import add_user, save_message, get_recent_messages, get_user_focus
 from safety import is_high_risk, sanitize_user_input
 from services.analytics import get_quick_exercise_suggestions
 from services.i18n import get_text
+from config import SUPPORT_GROUP_ID
 
 logger = logging.getLogger(__name__)
 router = Router()
@@ -15,6 +16,10 @@ MAX_USER_TEXT_LENGTH = 3000
 
 @router.message(StateFilter(None))
 async def fallback_message(message: Message, **kwargs):
+    # Игнорируем сообщения из группы поддержки
+    if message.chat and message.chat.id == SUPPORT_GROUP_ID:
+        return
+
     user = message.from_user
     lang = kwargs.get("lang", "ru")
     if user:
@@ -22,6 +27,7 @@ async def fallback_message(message: Message, **kwargs):
     telegram_id = user.id if user else message.chat.id
     user_text = message.text or message.caption or ""
     user_text = user_text.strip()
+
     if not user_text:
         await message.answer(get_text("fallback_not_text", lang))
         return
@@ -37,7 +43,8 @@ async def fallback_message(message: Message, **kwargs):
         keyboard_rows = []
         for exercise in suggestions:
             keyboard_rows.append([InlineKeyboardButton(text=exercise, callback_data=f"quick_exercise_{exercise}")])
-        await message.answer(get_text("fallback_quick_exercise", lang), reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard_rows))
+        await message.answer(get_text("fallback_quick_exercise", lang),
+                             reply_markup=InlineKeyboardMarkup(inline_keyboard=keyboard_rows))
         return
     if user_text.startswith("/"):
         await message.answer(get_text("fallback_unknown_command", lang))

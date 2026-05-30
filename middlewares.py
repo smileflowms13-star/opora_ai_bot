@@ -5,6 +5,7 @@ from database import user_has_consent, get_user_language
 from keyboards import get_onboarding_menu
 from safety import is_high_risk
 from services.i18n import get_text
+from config import SUPPORT_GROUP_ID   # импортируем ID группы поддержки
 
 class LanguageMiddleware(BaseMiddleware):
     async def __call__(self, handler, event, data):
@@ -28,11 +29,18 @@ class ConsentMiddleware(BaseMiddleware):
     async def __call__(self, handler, event, data):
         if not isinstance(event, Message):
             return await handler(event, data)
+
+        # Не проверяем согласие для сообщений из группы поддержки
+        if event.chat and event.chat.id == SUPPORT_GROUP_ID:
+            return await handler(event, data)
+
         user = event.from_user
         if user is None:
             return await handler(event, data)
+
         text = (event.text or event.caption or "").strip()
         lang = data.get("lang", "ru")
+
         if text and is_high_risk(text):
             await event.answer(get_text("crisis_text", lang))
             return None

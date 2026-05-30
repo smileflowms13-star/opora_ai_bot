@@ -186,4 +186,6 @@ async def change_language(callback: CallbackQuery):
     set_user_language(callback.from_user.id, lang)
     msg = get_text("language_changed", lang)
     await callback.message.edit_text(msg)
+    # Автоматически обновляем клавиатуру главного меню на новом языке
+    await callback.message.answer(get_text("back_to_main_menu", lang), reply_markup=get_main_menu(lang))
     await callback.answer()

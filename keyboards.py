@@ -5,6 +5,9 @@ from services.i18n import get_text
 def _btn(key: str, lang: str) -> KeyboardButton:
     return KeyboardButton(text=get_text(key, lang))
 
+def _ibtn(key: str, lang: str, callback_data: str) -> InlineKeyboardButton:
+    return InlineKeyboardButton(text=get_text(key, lang), callback_data=callback_data)
+
 def get_focus_menu(lang: str = "ru") -> ReplyKeyboardMarkup:
     return ReplyKeyboardMarkup(
         keyboard=[
@@ -24,7 +27,7 @@ def get_main_menu(lang: str = "ru") -> ReplyKeyboardMarkup:
             [_btn("trigger_button_text", lang), _btn("relationships_button_text", lang)],
             [_btn("diary_button_text", lang), _btn("exercises_button_text", lang)],
             [_btn("map_button_text", lang), _btn("settings_button_text", lang)],
-            [_btn("garden_button", lang)],
+            [_btn("garden_button", lang), _btn("anon_support_button", lang)],
         ],
         resize_keyboard=True
     )
@@ -113,100 +116,100 @@ def get_withdraw_consent_confirm_menu(lang: str = "ru") -> ReplyKeyboardMarkup:
         input_field_placeholder=get_text("confirm_withdraw_placeholder", lang),
     )
 
-# Инлайн-клавиатуры оставим пока старыми (для упражнений), так как их текст не критичен для первого этапа.
-# При необходимости их тоже можно перевести.
-from texts import FAST_MOOD_EMOJI_MAP   # пока используем старый импорт
-
-def breathing_continue_keyboard():
+# Инлайн-клавиатуры для упражнений (теперь с поддержкой языка)
+def breathing_continue_keyboard(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Продолжить", callback_data="breathing_next")],
-        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
-        [InlineKeyboardButton(text="🚪 Выйти", callback_data="breathing_exit")],
+        [_ibtn("inline_continue", lang, "breathing_next")],
+        [_ibtn("inline_listen", lang, "listen")],
+        [_ibtn("inline_exit", lang, "breathing_exit")],
     ])
 
-def breathing_finish_keyboard():
+def breathing_finish_keyboard(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="Вернуться в меню", callback_data="breathing_exit")],
-        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
+        [_ibtn("inline_back_to_menu", lang, "breathing_exit")],
+        [_ibtn("inline_listen", lang, "listen")],
     ])
 
-def grounding_continue_keyboard():
+def grounding_continue_keyboard(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="▶️ Продолжить", callback_data="grounding_next")],
-        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
-        [InlineKeyboardButton(text="🚪 Выйти", callback_data="grounding_exit")],
+        [_ibtn("inline_continue", lang, "grounding_next")],
+        [_ibtn("inline_listen", lang, "listen")],
+        [_ibtn("inline_exit", lang, "grounding_exit")],
     ])
 
-def grounding_finish_keyboard():
+def grounding_finish_keyboard(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🏠 В главное меню", callback_data="grounding_exit")],
-        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
+        [_ibtn("inline_to_main_menu", lang, "grounding_exit")],
+        [_ibtn("inline_listen", lang, "listen")],
     ])
 
-def stop_continue_keyboard():
+def stop_continue_keyboard(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="▶️ Продолжить", callback_data="stop_next")],
-        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
-        [InlineKeyboardButton(text="🚪 Выйти", callback_data="stop_exit")],
+        [_ibtn("inline_continue", lang, "stop_next")],
+        [_ibtn("inline_listen", lang, "listen")],
+        [_ibtn("inline_exit", lang, "stop_exit")],
     ])
 
-def stop_finish_keyboard():
+def stop_finish_keyboard(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🏠 В главное меню", callback_data="stop_exit")],
-        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
+        [_ibtn("inline_to_main_menu", lang, "stop_exit")],
+        [_ibtn("inline_listen", lang, "listen")],
     ])
 
-def control_zone_continue_keyboard():
+def control_zone_continue_keyboard(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="▶️ Продолжить", callback_data="control_zone_next")],
-        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
-        [InlineKeyboardButton(text="🚪 Выйти", callback_data="control_zone_exit")],
+        [_ibtn("inline_continue", lang, "control_zone_next")],
+        [_ibtn("inline_listen", lang, "listen")],
+        [_ibtn("inline_exit", lang, "control_zone_exit")],
     ])
 
-def control_zone_finish_keyboard():
+def control_zone_finish_keyboard(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🏠 В главное меню", callback_data="control_zone_exit")],
-        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
+        [_ibtn("inline_to_main_menu", lang, "control_zone_exit")],
+        [_ibtn("inline_listen", lang, "listen")],
     ])
 
-def self_compassion_continue_keyboard():
+def self_compassion_continue_keyboard(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="▶️ Продолжить", callback_data="self_compassion_next")],
-        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
-        [InlineKeyboardButton(text="🚪 Выйти", callback_data="self_compassion_exit")],
+        [_ibtn("inline_continue", lang, "self_compassion_next")],
+        [_ibtn("inline_listen", lang, "listen")],
+        [_ibtn("inline_exit", lang, "self_compassion_exit")],
     ])
 
-def self_compassion_finish_keyboard():
+def self_compassion_finish_keyboard(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🏠 В главное меню", callback_data="self_compassion_exit")],
-        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
+        [_ibtn("inline_to_main_menu", lang, "self_compassion_exit")],
+        [_ibtn("inline_listen", lang, "listen")],
     ])
 
-def unsent_letter_continue_keyboard():
+def unsent_letter_continue_keyboard(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="▶️ Продолжить", callback_data="unsent_letter_next")],
-        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
-        [InlineKeyboardButton(text="🚪 Выйти", callback_data="unsent_letter_exit")],
+        [_ibtn("inline_continue", lang, "unsent_letter_next")],
+        [_ibtn("inline_listen", lang, "listen")],
+        [_ibtn("inline_exit", lang, "unsent_letter_exit")],
     ])
 
-def unsent_letter_finish_keyboard():
+def unsent_letter_finish_keyboard(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🏠 В главное меню", callback_data="unsent_letter_exit")],
-        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
+        [_ibtn("inline_to_main_menu", lang, "unsent_letter_exit")],
+        [_ibtn("inline_listen", lang, "listen")],
     ])
 
-def breathing46_continue_keyboard():
+def breathing46_continue_keyboard(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="▶️ Продолжить", callback_data="breathing46_next")],
-        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
-        [InlineKeyboardButton(text="🚪 Выйти", callback_data="breathing46_exit")],
+        [_ibtn("inline_continue", lang, "breathing46_next")],
+        [_ibtn("inline_listen", lang, "listen")],
+        [_ibtn("inline_exit", lang, "breathing46_exit")],
     ])
 
-def breathing46_finish_keyboard():
+def breathing46_finish_keyboard(lang: str = "ru"):
     return InlineKeyboardMarkup(inline_keyboard=[
-        [InlineKeyboardButton(text="🏠 В главное меню", callback_data="breathing46_exit")],
-        [InlineKeyboardButton(text="🔊 Прослушать", callback_data="listen")],
+        [_ibtn("inline_to_main_menu", lang, "breathing46_exit")],
+        [_ibtn("inline_listen", lang, "listen")],
     ])
+
+# Остальные клавиатуры
+from texts import FAST_MOOD_EMOJI_MAP   # быстрая отметка не зависит от языка
 
 def fast_mood_keyboard():
     buttons = []

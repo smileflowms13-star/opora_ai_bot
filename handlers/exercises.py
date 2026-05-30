@@ -111,7 +111,7 @@ async def listen_step(callback: CallbackQuery, state: FSMContext):
         if audio_path and os.path.exists(audio_path):
             os.unlink(audio_path)
 
-# ===== Breathing =====
+# ===== Дыхание по квадрату =====
 @exercises_router.message(F.text.in_([get_text("breathing_button", "ru"), get_text("breathing_button", "en")]))
 async def start_breathing(message: Message, state: FSMContext, **kwargs):
     await state.clear()
@@ -119,7 +119,7 @@ async def start_breathing(message: Message, state: FSMContext, **kwargs):
     await state.set_state(BreathingSteps.intro)
     text = get_text("breathing_intro", lang)
     await state.update_data(current_text=text)
-    await message.answer(text, reply_markup=breathing_continue_keyboard())
+    await message.answer(text, reply_markup=breathing_continue_keyboard(lang))
 
 @exercises_router.callback_query(F.data == "breathing_next")
 async def next_step(callback: CallbackQuery, state: FSMContext, **kwargs):
@@ -144,7 +144,7 @@ async def next_step(callback: CallbackQuery, state: FSMContext, **kwargs):
         await exit_breathing(callback, state)
         return
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=breathing_continue_keyboard())
+    await callback.message.edit_text(text, reply_markup=breathing_continue_keyboard(lang))
     await callback.answer()
 
 @exercises_router.callback_query(F.data == "breathing_exit")
@@ -155,7 +155,7 @@ async def exit_breathing(callback: CallbackQuery, state: FSMContext, **kwargs):
     await callback.message.answer(get_text("back_to_main_menu", lang), reply_markup=get_main_menu(lang))
     await callback.answer()
 
-# ===== Grounding =====
+# ===== 5-4-3-2-1 =====
 @exercises_router.message(F.text.in_([get_text("grounding_button", "ru"), get_text("grounding_button", "en")]))
 async def start_grounding(message: Message, state: FSMContext, **kwargs):
     await state.clear()
@@ -163,7 +163,7 @@ async def start_grounding(message: Message, state: FSMContext, **kwargs):
     await state.set_state(GroundingSteps.intro)
     text = get_text("grounding_intro", lang)
     await state.update_data(current_text=text)
-    await message.answer(text, reply_markup=grounding_continue_keyboard(), parse_mode="HTML")
+    await message.answer(text, reply_markup=grounding_continue_keyboard(lang), parse_mode="HTML")
 
 @exercises_router.callback_query(StateFilter(GroundingSteps.intro), F.data == "grounding_next")
 async def grounding_step_see(callback: CallbackQuery, state: FSMContext, **kwargs):
@@ -171,7 +171,7 @@ async def grounding_step_see(callback: CallbackQuery, state: FSMContext, **kwarg
     await state.set_state(GroundingSteps.see)
     text = get_text("grounding_step_see", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=grounding_continue_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=grounding_continue_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(GroundingSteps.see), F.data == "grounding_next")
@@ -180,7 +180,7 @@ async def grounding_step_touch(callback: CallbackQuery, state: FSMContext, **kwa
     await state.set_state(GroundingSteps.touch)
     text = get_text("grounding_step_touch", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=grounding_continue_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=grounding_continue_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(GroundingSteps.touch), F.data == "grounding_next")
@@ -189,7 +189,7 @@ async def grounding_step_hear(callback: CallbackQuery, state: FSMContext, **kwar
     await state.set_state(GroundingSteps.hear)
     text = get_text("grounding_step_hear", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=grounding_continue_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=grounding_continue_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(GroundingSteps.hear), F.data == "grounding_next")
@@ -198,7 +198,7 @@ async def grounding_step_smell(callback: CallbackQuery, state: FSMContext, **kwa
     await state.set_state(GroundingSteps.smell)
     text = get_text("grounding_step_smell", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=grounding_continue_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=grounding_continue_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(GroundingSteps.smell), F.data == "grounding_next")
@@ -207,7 +207,7 @@ async def grounding_step_taste(callback: CallbackQuery, state: FSMContext, **kwa
     await state.set_state(GroundingSteps.taste)
     text = get_text("grounding_step_taste", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=grounding_continue_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=grounding_continue_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(GroundingSteps.taste), F.data == "grounding_next")
@@ -216,7 +216,7 @@ async def grounding_step_finish(callback: CallbackQuery, state: FSMContext, **kw
     await state.set_state(GroundingSteps.finish)
     text = get_text("grounding_finish", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=grounding_finish_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=grounding_finish_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(GroundingSteps.finish), F.data == "grounding_exit")
@@ -246,7 +246,7 @@ async def start_stop(message: Message, state: FSMContext, **kwargs):
     await state.set_state(StopSteps.intro)
     text = get_text("stop_intro", lang)
     await state.update_data(current_text=text)
-    await message.answer(text, reply_markup=stop_continue_keyboard(), parse_mode="HTML")
+    await message.answer(text, reply_markup=stop_continue_keyboard(lang), parse_mode="HTML")
 
 @exercises_router.callback_query(StateFilter(StopSteps.intro), F.data == "stop_next")
 async def stop_step_stop(callback: CallbackQuery, state: FSMContext, **kwargs):
@@ -254,7 +254,7 @@ async def stop_step_stop(callback: CallbackQuery, state: FSMContext, **kwargs):
     await state.set_state(StopSteps.stop)
     text = get_text("stop_step_stop", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=stop_continue_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=stop_continue_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(StopSteps.stop), F.data == "stop_next")
@@ -263,7 +263,7 @@ async def stop_step_breathe(callback: CallbackQuery, state: FSMContext, **kwargs
     await state.set_state(StopSteps.breathe)
     text = get_text("stop_step_breathe", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=stop_continue_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=stop_continue_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(StopSteps.breathe), F.data == "stop_next")
@@ -272,7 +272,7 @@ async def stop_step_observe(callback: CallbackQuery, state: FSMContext, **kwargs
     await state.set_state(StopSteps.observe)
     text = get_text("stop_step_observe", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=stop_continue_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=stop_continue_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(StopSteps.observe), F.data == "stop_next")
@@ -281,7 +281,7 @@ async def stop_step_proceed(callback: CallbackQuery, state: FSMContext, **kwargs
     await state.set_state(StopSteps.proceed)
     text = get_text("stop_step_proceed", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=stop_continue_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=stop_continue_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(StopSteps.proceed), F.data == "stop_next")
@@ -290,7 +290,7 @@ async def stop_step_finish(callback: CallbackQuery, state: FSMContext, **kwargs)
     await state.set_state(StopSteps.finish)
     text = get_text("stop_finish", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=stop_finish_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=stop_finish_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(StopSteps.finish), F.data == "stop_exit")
@@ -312,7 +312,7 @@ async def exit_stop(callback: CallbackQuery, state: FSMContext, **kwargs):
     await callback.message.answer(get_text("back_to_main_menu", lang), reply_markup=get_main_menu(lang))
     await callback.answer()
 
-# ===== Control Zone =====
+# ===== Зона контроля =====
 @exercises_router.message(F.text.in_([get_text("control_zone_button", "ru"), get_text("control_zone_button", "en")]))
 async def start_control_zone(message: Message, state: FSMContext, **kwargs):
     await state.clear()
@@ -320,7 +320,7 @@ async def start_control_zone(message: Message, state: FSMContext, **kwargs):
     await state.set_state(ControlZoneSteps.intro)
     text = get_text("control_zone_intro", lang)
     await state.update_data(current_text=text)
-    await message.answer(text, reply_markup=control_zone_continue_keyboard(), parse_mode="HTML")
+    await message.answer(text, reply_markup=control_zone_continue_keyboard(lang), parse_mode="HTML")
 
 @exercises_router.callback_query(StateFilter(ControlZoneSteps.intro), F.data == "control_zone_next")
 async def control_zone_step_out(callback: CallbackQuery, state: FSMContext, **kwargs):
@@ -328,7 +328,7 @@ async def control_zone_step_out(callback: CallbackQuery, state: FSMContext, **kw
     await state.set_state(ControlZoneSteps.out_of_control)
     text = get_text("control_zone_step_out", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=control_zone_continue_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=control_zone_continue_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(ControlZoneSteps.out_of_control), F.data == "control_zone_next")
@@ -337,7 +337,7 @@ async def control_zone_step_influence(callback: CallbackQuery, state: FSMContext
     await state.set_state(ControlZoneSteps.influence)
     text = get_text("control_zone_step_influence", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=control_zone_continue_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=control_zone_continue_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(ControlZoneSteps.influence), F.data == "control_zone_next")
@@ -346,7 +346,7 @@ async def control_zone_step_action(callback: CallbackQuery, state: FSMContext, *
     await state.set_state(ControlZoneSteps.action)
     text = get_text("control_zone_step_action", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=control_zone_continue_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=control_zone_continue_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(ControlZoneSteps.action), F.data == "control_zone_next")
@@ -355,7 +355,7 @@ async def control_zone_step_finish(callback: CallbackQuery, state: FSMContext, *
     await state.set_state(ControlZoneSteps.finish)
     text = get_text("control_zone_finish", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=control_zone_finish_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=control_zone_finish_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(ControlZoneSteps.finish), F.data == "control_zone_exit")
@@ -377,7 +377,7 @@ async def exit_control_zone(callback: CallbackQuery, state: FSMContext, **kwargs
     await callback.message.answer(get_text("back_to_main_menu", lang), reply_markup=get_main_menu(lang))
     await callback.answer()
 
-# ===== Self-Compassion =====
+# ===== Самосострадание =====
 @exercises_router.message(F.text.in_([get_text("self_compassion_button", "ru"), get_text("self_compassion_button", "en")]))
 async def start_self_compassion(message: Message, state: FSMContext, **kwargs):
     await state.clear()
@@ -385,7 +385,7 @@ async def start_self_compassion(message: Message, state: FSMContext, **kwargs):
     await state.set_state(SelfCompassionSteps.intro)
     text = get_text("self_compassion_intro", lang)
     await state.update_data(current_text=text)
-    await message.answer(text, reply_markup=self_compassion_continue_keyboard(), parse_mode="HTML")
+    await message.answer(text, reply_markup=self_compassion_continue_keyboard(lang), parse_mode="HTML")
 
 @exercises_router.callback_query(StateFilter(SelfCompassionSteps.intro), F.data == "self_compassion_next")
 async def self_compassion_step_touch(callback: CallbackQuery, state: FSMContext, **kwargs):
@@ -393,7 +393,7 @@ async def self_compassion_step_touch(callback: CallbackQuery, state: FSMContext,
     await state.set_state(SelfCompassionSteps.touch)
     text = get_text("self_compassion_step_touch", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=self_compassion_continue_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=self_compassion_continue_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(SelfCompassionSteps.touch), F.data == "self_compassion_next")
@@ -402,7 +402,7 @@ async def self_compassion_step_phrase1(callback: CallbackQuery, state: FSMContex
     await state.set_state(SelfCompassionSteps.phrase1)
     text = get_text("self_compassion_step_phrase1", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=self_compassion_continue_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=self_compassion_continue_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(SelfCompassionSteps.phrase1), F.data == "self_compassion_next")
@@ -411,7 +411,7 @@ async def self_compassion_step_phrase2(callback: CallbackQuery, state: FSMContex
     await state.set_state(SelfCompassionSteps.phrase2)
     text = get_text("self_compassion_step_phrase2", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=self_compassion_continue_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=self_compassion_continue_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(SelfCompassionSteps.phrase2), F.data == "self_compassion_next")
@@ -420,7 +420,7 @@ async def self_compassion_step_phrase3(callback: CallbackQuery, state: FSMContex
     await state.set_state(SelfCompassionSteps.phrase3)
     text = get_text("self_compassion_step_phrase3", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=self_compassion_continue_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=self_compassion_continue_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(SelfCompassionSteps.phrase3), F.data == "self_compassion_next")
@@ -429,7 +429,7 @@ async def self_compassion_step_breathe(callback: CallbackQuery, state: FSMContex
     await state.set_state(SelfCompassionSteps.breathe)
     text = get_text("self_compassion_step_breathe", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=self_compassion_continue_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=self_compassion_continue_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(SelfCompassionSteps.breathe), F.data == "self_compassion_next")
@@ -438,7 +438,7 @@ async def self_compassion_step_finish(callback: CallbackQuery, state: FSMContext
     await state.set_state(SelfCompassionSteps.finish)
     text = get_text("self_compassion_finish", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=self_compassion_finish_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=self_compassion_finish_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(SelfCompassionSteps.finish), F.data == "self_compassion_exit")
@@ -460,7 +460,7 @@ async def exit_self_compassion(callback: CallbackQuery, state: FSMContext, **kwa
     await callback.message.answer(get_text("back_to_main_menu", lang), reply_markup=get_main_menu(lang))
     await callback.answer()
 
-# ===== Unsent Letter =====
+# ===== Письмо без отправки =====
 @exercises_router.message(F.text.in_([get_text("unsent_letter_button", "ru"), get_text("unsent_letter_button", "en")]))
 async def start_unsent_letter(message: Message, state: FSMContext, **kwargs):
     await state.clear()
@@ -468,7 +468,7 @@ async def start_unsent_letter(message: Message, state: FSMContext, **kwargs):
     await state.set_state(UnsentLetterSteps.intro)
     text = get_text("unsent_letter_intro", lang)
     await state.update_data(current_text=text)
-    await message.answer(text, reply_markup=unsent_letter_continue_keyboard(), parse_mode="HTML")
+    await message.answer(text, reply_markup=unsent_letter_continue_keyboard(lang), parse_mode="HTML")
 
 @exercises_router.callback_query(StateFilter(UnsentLetterSteps.intro), F.data == "unsent_letter_next")
 async def unsent_letter_step_to(callback: CallbackQuery, state: FSMContext, **kwargs):
@@ -476,7 +476,7 @@ async def unsent_letter_step_to(callback: CallbackQuery, state: FSMContext, **kw
     await state.set_state(UnsentLetterSteps.to)
     text = get_text("unsent_letter_step_to", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=unsent_letter_continue_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=unsent_letter_continue_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(UnsentLetterSteps.to), F.data == "unsent_letter_next")
@@ -485,7 +485,7 @@ async def unsent_letter_step_emotion(callback: CallbackQuery, state: FSMContext,
     await state.set_state(UnsentLetterSteps.emotion)
     text = get_text("unsent_letter_step_emotion", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=unsent_letter_continue_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=unsent_letter_continue_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(UnsentLetterSteps.emotion), F.data == "unsent_letter_next")
@@ -494,7 +494,7 @@ async def unsent_letter_step_say(callback: CallbackQuery, state: FSMContext, **k
     await state.set_state(UnsentLetterSteps.say)
     text = get_text("unsent_letter_step_say", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=unsent_letter_continue_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=unsent_letter_continue_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(UnsentLetterSteps.say), F.data == "unsent_letter_next")
@@ -503,7 +503,7 @@ async def unsent_letter_step_need(callback: CallbackQuery, state: FSMContext, **
     await state.set_state(UnsentLetterSteps.need)
     text = get_text("unsent_letter_step_need", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=unsent_letter_continue_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=unsent_letter_continue_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(UnsentLetterSteps.need), F.data == "unsent_letter_next")
@@ -512,7 +512,7 @@ async def unsent_letter_step_finish(callback: CallbackQuery, state: FSMContext, 
     await state.set_state(UnsentLetterSteps.finish)
     text = get_text("unsent_letter_finish", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=unsent_letter_finish_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=unsent_letter_finish_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(UnsentLetterSteps.finish), F.data == "unsent_letter_exit")
@@ -534,7 +534,7 @@ async def exit_unsent_letter(callback: CallbackQuery, state: FSMContext, **kwarg
     await callback.message.answer(get_text("back_to_main_menu", lang), reply_markup=get_main_menu(lang))
     await callback.answer()
 
-# ===== Breathing 4-6 =====
+# ===== Дыхание 4–6 =====
 @exercises_router.message(F.text.in_([get_text("breathing_46_button", "ru"), get_text("breathing_46_button", "en")]))
 async def start_breathing46(message: Message, state: FSMContext, **kwargs):
     await state.clear()
@@ -542,7 +542,7 @@ async def start_breathing46(message: Message, state: FSMContext, **kwargs):
     await state.set_state(Breathing46Steps.intro)
     text = get_text("breathing_46_intro", lang)
     await state.update_data(current_text=text)
-    await message.answer(text, reply_markup=breathing46_continue_keyboard(), parse_mode="HTML")
+    await message.answer(text, reply_markup=breathing46_continue_keyboard(lang), parse_mode="HTML")
 
 @exercises_router.callback_query(StateFilter(Breathing46Steps.intro), F.data == "breathing46_next")
 async def breathing46_step_inhale(callback: CallbackQuery, state: FSMContext, **kwargs):
@@ -550,7 +550,7 @@ async def breathing46_step_inhale(callback: CallbackQuery, state: FSMContext, **
     await state.set_state(Breathing46Steps.inhale)
     text = get_text("breathing_46_step_inhale", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=breathing46_continue_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=breathing46_continue_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(Breathing46Steps.inhale), F.data == "breathing46_next")
@@ -559,7 +559,7 @@ async def breathing46_step_exhale(callback: CallbackQuery, state: FSMContext, **
     await state.set_state(Breathing46Steps.exhale)
     text = get_text("breathing_46_step_exhale", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=breathing46_continue_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=breathing46_continue_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(Breathing46Steps.exhale), F.data == "breathing46_next")
@@ -568,7 +568,7 @@ async def breathing46_step_finish(callback: CallbackQuery, state: FSMContext, **
     await state.set_state(Breathing46Steps.finish)
     text = get_text("breathing_46_finish", lang)
     await state.update_data(current_text=text)
-    await callback.message.edit_text(text, reply_markup=breathing46_finish_keyboard(), parse_mode="HTML")
+    await callback.message.edit_text(text, reply_markup=breathing46_finish_keyboard(lang), parse_mode="HTML")
     await callback.answer()
 
 @exercises_router.callback_query(StateFilter(Breathing46Steps.finish), F.data == "breathing46_exit")

@@ -358,4 +358,17 @@ TEXTS = {
     "sleep_good": "Good",
     "exercise_completed": "Exercise completed. Main menu:",
     "exercise_cancelled": "Exercise cancelled. Returning to main menu.",
+        "anon_support_button": "🫂 Anonymous Support",
+    "anon_support_intro": "🫂 <b>Anonymous Support</b>\n\nHere you can share your concerns and receive a reply from a real person (volunteer or professional).\n\nWrite the message you want to send. It will be delivered anonymously — your Telegram account will not be revealed.",
+    "anon_support_sent": "✅ Your message has been sent to the support service. You will receive the reply here.",
+    "anon_support_reply": "💬 <b>Reply from support:</b>\n\n{reply_text}",
+    "anon_support_error": "❌ Failed to send the message. Please try again later.",
+        "close_request_button": "🔒 Close request",
+    "request_closed": "Request closed. You will no longer receive replies from support regarding this issue.",
+        # Inline buttons for exercises
+    "inline_continue": "▶️ Continue",
+    "inline_listen": "🔊 Listen",
+    "inline_exit": "🚪 Exit",
+    "inline_back_to_menu": "Return to menu",
+    "inline_to_main_menu": "🏠 Main menu",
 }

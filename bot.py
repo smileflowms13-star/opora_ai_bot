@@ -8,6 +8,7 @@ from config import BOT_TOKEN
 from handlers.start import router as start_router
 from handlers.sections import router as sections_router
 from handlers.settings import router as settings_router
+from handlers.support import router as support_router
 from handlers.sos import router as sos_router
 from handlers.exercises import exercises_router
 from handlers.diary import router as diary_router
@@ -48,6 +49,7 @@ async def main():
 
     dp.include_router(start_router)
     dp.include_router(sections_router)
+    dp.include_router(support_router)
     dp.include_router(settings_router)
     dp.include_router(sos_router)
     dp.include_router(exercises_router)
